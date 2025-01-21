@@ -1,23 +1,18 @@
-<<<<<<< HEAD
 # Quizflow_Frontend
+## Let's start
+1. jdk 17.0.13 다운
+2. 환경 변수 설정: 아래 사이트 참고
+       https://kincoding.com/entry/Flutter-%EA%B0%9C%EB%B0%9C-%ED%99%98%EA%B2%BD-%EC%B4%88%EA%B8%B0-%EC%84%B8%ED%8C%85-12-Java-%EC%84%A4%EC%B9%98-%EB%B0%8F-%ED%99%98%EA%B2%BD-%EB%B3%80%EC%88%98-%EC%84%B8%ED%8C%85
+3. 플러터 jdk 버전 변경
+4. flutter doctor
+5. 안드로이드 스튜디오 - SDK manager - Languages&Frameworks - Android SDK - SDK Tools - Android SDK Command-line Tools 업데이트
+6. 안드로이드 스튜디오 - new Flutter Project - 코틀린 선택
+7. pubspec.yaml - pub get
+8. main.dart - get Dependencies
+9. Git repo 연결
+10. git pull
+
+
 
 ## Screen 구성
 1. login
-=======
-# quizflow_frontend
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
->>>>>>> f746314 (commit test)
