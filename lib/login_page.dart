@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,26 +12,33 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xFF69A88D),
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Image.asset(
+                  'assets/images/logos/transparent_white.png',
+                  width: 300,
+                ),
+                SizedBox(height: 20),
+
                 // Hello Again
                 Text(
-                  'Hello Again!',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 36,
-                  ),
+                  'Welcome!',
+                  style: GoogleFonts.bebasNeue(
+                    fontSize: 52,
+                    color: Color(0xFFf3eee6),
+                  )
                 ),
-                SizedBox(height: 10),
+
                 Text(
-                  'Welcome back, you\'ve been missed!',
-                  style: TextStyle(
+                  'Ready to test your knowledge?',
+                  style: GoogleFonts.bebasNeue(
                     fontSize: 20,
-                  ),
+                    color: Color(0xFFf3eee6),
+                  )
                 ),
                 SizedBox(height: 50),
 
@@ -87,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple,
+                      color: Color(0xFF176560),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -111,13 +117,14 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'Not a member?',
                       style: TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       ' Register now',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: Color(0xFFe5bdb5),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
