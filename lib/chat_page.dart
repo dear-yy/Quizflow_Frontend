@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quizflow_frontend/chatroom_page.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -31,7 +32,17 @@ class _ChatPageState extends State<ChatPage> {
             child: ListView.builder(
               itemCount: chats.length,
               itemBuilder: (context, index) {
-                return _buildChatItem(chats[index]["date"]!, chats[index]["time"]!);
+                return GestureDetector(
+                  onTap: () {
+                    if (chats[index]["date"] == "2025.01.29") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ChatRoomScreen()),
+                      );
+                    }
+                  },
+                  child: _buildChatItem(chats[index]["date"]!, chats[index]["time"]!),
+                );
               },
             ),
           ),
