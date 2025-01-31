@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quizflow_frontend/register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -121,11 +122,19 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      ' Register now',
-                      style: TextStyle(
-                        color: Color(0xFFe5bdb5),
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => RegisterPage()),
+                        );
+                      },
+                      child: Text(
+                        ' Register now',
+                        style: TextStyle(
+                          color: Color(0xFFe5bdb5),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
