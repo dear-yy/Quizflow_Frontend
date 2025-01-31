@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:quizflow_frontend/navigation_bar.dart'; // 하단 네비게이션 바를 가져옵니다.
-import 'package:quizflow_frontend/profile_page.dart';
+import 'package:quizflow_frontend/navigation_bar.dart';
 import 'package:quizflow_frontend/chat_page.dart';
+import 'package:quizflow_frontend/battle_page.dart';
+import 'package:quizflow_frontend/ranking_page.dart';
+import 'package:quizflow_frontend/settings_page.dart';
 
 class LoginSuccessPage extends StatefulWidget {
   @override
@@ -10,33 +12,55 @@ class LoginSuccessPage extends StatefulWidget {
 
 class _LoginSuccessPageState extends State<LoginSuccessPage> {
   int _selectedIndex = 0;
+  final PageController _pageController = PageController(initialPage: 0); // 여기서 바로 초기화!
 
-  // 각 페이지를 나누어 리스트로 관리
-  List<Widget> _pages = [
-    ChatPage(),
-    ProfilePage(),
-  ];
+  @override
+  void dispose() {
+    _pageController.dispose(); // 사용이 끝나면 메모리 해제
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    _pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFF69A88D),
-      appBar: AppBar(
-        title: Text('Login Success'),
-        backgroundColor: Color(0xFF176560),
-      ),
-      body: SafeArea(
-        child: _pages[_selectedIndex], // 선택된 페이지 표시
-      ),
-      bottomNavigationBar: BottomNavigationBarWidget(
-        selectedIndex: _selectedIndex, // 선택된 인덱스
-        onItemTapped: _onItemTapped, // 탭 시 인덱스 업데이트
+    return PopScope(
+      canPop: false, // 뒤로 가기 차단
+      child: Scaffold(
+        backgroundColor: Color(0xFF69A88D),
+        appBar: AppBar(
+          title: Text(['Chat', 'Battle', 'Ranking', 'Settings'][_selectedIndex]),
+          backgroundColor: Color(0xFF176560),
+          automaticallyImplyLeading: false, // 뒤로 가기 버튼 삭제
+        ),
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          children: [
+            ChatPage(),
+            BattlePage(),
+            RankingPage(),
+            SettingsPage(),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBarWidget(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
+          pageController: _pageController, // 전달
+        ),
       ),
     );
   }
