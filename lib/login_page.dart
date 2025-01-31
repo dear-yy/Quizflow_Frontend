@@ -4,6 +4,7 @@ import 'package:quizflow_frontend/login_success.dart';
 import 'package:quizflow_frontend/register_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -36,17 +37,19 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        // 로그인 성공: 토큰 받기
         final responseData = json.decode(response.body);
         final token = responseData['token'];
 
-        // 토큰을 받았다면 성공 페이지로 이동
+        // shared_preferences에 토큰 저장
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+
+        // 로그인 성공 후 화면 이동
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => LoginSuccessPage()),
         );
       } else {
-        // 로그인 실패: 에러 메시지
         final errorResponse = json.decode(response.body);
         String errorMessage = '로그인 실패';
         if (errorResponse.containsKey('detail')) {
@@ -55,10 +58,9 @@ class _LoginPageState extends State<LoginPage> {
         _showError(errorMessage);
       }
     } catch (error) {
-  // 에러의 세부 정보를 출력
-  print('Error: $error');
-  _showError('네트워크 오류가 발생했습니다');
-  }
+      print('Error: $error');
+      _showError('네트워크 오류가 발생했습니다');
+    }
 }
 
   void _showError(String message) {
