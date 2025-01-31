@@ -26,11 +26,6 @@ class _RankingPageState extends State<RankingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Ranking Page"),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
