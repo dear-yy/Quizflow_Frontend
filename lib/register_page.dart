@@ -35,24 +35,31 @@ class _RegisterPageState extends State<RegisterPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Success"),
-          content: Text("User registered successfully!"),
+          title: const Text("Success"),
+          content: const Text("User registered successfully!"),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pop(context); // 로그인 페이지로 이동
               },
-              child: Text("OK"),
+              child: const Text("OK"),
             ),
           ],
         ),
       );
     } else {
-      // 오류 처리
-      setState(() {
-        _errorMessage = jsonDecode(response.body)["error"] ?? "Registration failed.";
-      });
+      // 오류 처리 및 콘솔 출력
+      try {
+        final responseData = jsonDecode(response.body);
+        _errorMessage = responseData["error"] ?? "Registration failed.";
+      } catch (e) {
+        _errorMessage = "Error decoding server response.";
+      }
+
+      print("Registration Error: $_errorMessage"); // 🔥 콘솔에 오류 메시지 출력
+
+      setState(() {}); // UI 업데이트
     }
   }
 

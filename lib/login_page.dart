@@ -22,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      // 필수 입력값이 비어있으면 에러 메시지 출력
       _showError('이메일과 패스워드를 입력하세요');
       return;
     }
@@ -39,13 +38,18 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final token = responseData['token'];
+        final userPk = responseData['user_pk']; // user_pk 저장
 
-        // shared_preferences에 토큰 저장
+        // ✅ SharedPreferences에 token & user_pk 저장
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
+        await prefs.setInt('user_pk', userPk); // user_pk 저장
+
+        print("저장된 token: $token");
+        print("저장된 user_pk: $userPk");
 
         // 로그인 성공 후 화면 이동
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => LoginSuccessPage()),
         );
@@ -61,20 +65,20 @@ class _LoginPageState extends State<LoginPage> {
       print('Error: $error');
       _showError('네트워크 오류가 발생했습니다');
     }
-}
+  }
 
   void _showError(String message) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('오류'),
+        title: const Text('오류'),
         content: Text(message),
         actions: <Widget>[
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
             },
-            child: Text('확인'),
+            child: const Text('확인'),
           ),
         ],
       ),
@@ -84,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF69A88D),
+      backgroundColor: const Color(0xFF69A88D),
       body: SafeArea(
         child: Center(
           child: Column(
@@ -94,23 +98,22 @@ class _LoginPageState extends State<LoginPage> {
                 'assets/images/logos/transparent_white.png',
                 width: 300,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text(
-                  'Welcome!',
-                  style: GoogleFonts.bebasNeue(
-                    fontSize: 52,
-                    color: Color(0xFFf3eee6),
-                  )
+                'Welcome!',
+                style: GoogleFonts.bebasNeue(
+                  fontSize: 52,
+                  color: const Color(0xFFf3eee6),
+                ),
               ),
-
               Text(
-                  'Ready to test your knowledge?',
-                  style: GoogleFonts.bebasNeue(
-                    fontSize: 20,
-                    color: Color(0xFFf3eee6),
-                  )
+                'Ready to test your knowledge?',
+                style: GoogleFonts.bebasNeue(
+                  fontSize: 20,
+                  color: const Color(0xFFf3eee6),
+                ),
               ),
-              SizedBox(height: 50),
+              const SizedBox(height: 50),
 
               // 사용자 이름 입력
               Padding(
@@ -125,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.only(left: 20.0),
                     child: TextField(
                       controller: _usernameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Username',
                       ),
@@ -133,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
               // 패스워드 입력
               Padding(
@@ -149,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: TextField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Password',
                       ),
@@ -157,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
               // 로그인 버튼
               Padding(
@@ -165,12 +168,12 @@ class _LoginPageState extends State<LoginPage> {
                 child: GestureDetector(
                   onTap: _loginUser,
                   child: Container(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Color(0xFF176560),
+                      color: const Color(0xFF176560),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'Sign In',
                         style: TextStyle(
@@ -183,13 +186,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               // 회원가입 페이지로 이동
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  const Text(
                     'Not a member?',
                     style: TextStyle(
                       color: Colors.white,
@@ -203,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                         MaterialPageRoute(builder: (context) => RegisterPage()),
                       );
                     },
-                    child: Text(
+                    child: const Text(
                       ' Register now',
                       style: TextStyle(
                         color: Color(0xFFe5bdb5),
