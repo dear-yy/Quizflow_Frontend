@@ -49,19 +49,10 @@ class _ChatListPageState extends State<ChatListPage> {
       final data = jsonDecode(responseBody);
 
       if (response.statusCode == 201) {
-        print("✅ 채팅방 생성 성공: $data");
-
         int newQuizroomId = data["quizroom"]["id"];
 
-        setState(() {
-          chats.insert(0, {
-            "id": newQuizroomId,
-            "date": "날짜 없음",
-            "time": "시간 없음",
-            "end_date": null,
-            "cnt": 0, // 새 채팅방의 진행 상태는 기본값 0
-          });
-        });
+        // 🚀 채팅방 생성 후 최신 데이터를 불러오기
+        await _fetchChatRooms();
 
         _enterChatRoom(newQuizroomId);
       } else {
@@ -71,6 +62,7 @@ class _ChatListPageState extends State<ChatListPage> {
       print("❌ 채팅방 생성 중 오류 발생: $e");
     }
   }
+
 
   Future<void> _fetchChatRooms() async {
     try {
@@ -92,26 +84,24 @@ class _ChatListPageState extends State<ChatListPage> {
 
         setState(() {
           chats = data.map((room) {
-            // ✅ 날짜 변환 및 기본값 설정
             String startDate = room["start_date"] ?? "1970-01-01T00:00:00";
-            String updateDate = room["update_date"] ?? startDate; // 업데이트 날짜가 없으면 start_date 사용
-            String date = updateDate.split("T")[0]; // YYYY-MM-DD
-            String time = updateDate.split("T")[1].substring(0, 5); // HH:MM
+            String updateDate = room["update_date"] ?? startDate;
+            String date = updateDate.split("T")[0];
+            String time = updateDate.split("T")[1].substring(0, 5);
             String? endDate = room["end_date"];
-            int cnt = (room["cnt"] ?? 0) as int; // 진행 상태 (0~3)
+            int cnt = (room["cnt"] ?? 0) as int;
 
             return {
               "id": room["id"],
               "date": date,
               "time": time,
-              "start_date": startDate, // 정렬을 위한 필드 추가
-              "update_date": updateDate, // 마지막 업데이트 날짜
+              "start_date": startDate,
+              "update_date": updateDate,
               "end_date": endDate,
               "cnt": cnt,
             };
           }).toList();
 
-          // 최신 업데이트된 방이 위에 오도록 정렬 (update_date 기준 내림차순)
           chats.sort((a, b) => DateTime.parse(b["update_date"]).compareTo(DateTime.parse(a["update_date"])));
         });
       } else {
@@ -121,7 +111,6 @@ class _ChatListPageState extends State<ChatListPage> {
       print("❌ 채팅방 목록 불러오는 중 오류 발생: $e");
     }
   }
-
 
   void _enterChatRoom(int quizroomId) {
     Navigator.push(
@@ -149,11 +138,8 @@ class _ChatListPageState extends State<ChatListPage> {
               itemBuilder: (context, index) {
                 final chat = chats[index];
                 return GestureDetector(
-                  onTap: () {
-                    int quizroomId = chat["id"];
-                    _enterChatRoom(quizroomId);
-                  },
-                  child: _buildChatItem(chat["date"], chat["time"], chat["end_date"], chat["cnt"]),
+                  onTap: () => _enterChatRoom(chat["id"]),
+                  child: _buildChatItem(chat),
                 );
               },
             ),
@@ -168,45 +154,32 @@ class _ChatListPageState extends State<ChatListPage> {
     );
   }
 
-  Widget _buildChatItem(String date, String time, String? endDate, int cnt) {
-    String subtitleText = endDate != null
-        ? "종료 시간: ${endDate.split('T')[0]} ${endDate.split('T')[1].substring(0, 5)}"
-        : "퀴즈를 완료해보세요!";
+  Widget _buildChatItem(Map<String, dynamic> chat) {
+    String subtitleText = chat["cnt"] == 0
+        ? "퀴즈를 시작하세요!"
+        : chat["end_date"] != null
+        ? "종료 시간: ${chat["end_date"].split('T')[0]} ${chat["end_date"].split('T')[1].substring(0, 5)}"
+        : "퀴즈를 계속 푸세요! ${chat["update_date"].split('T')[0]} ${chat["update_date"].split('T')[1].substring(0, 5)}";
 
-    double progress = cnt / 3.0; // 진행 상태 (0.0 ~ 1.0)
-    Color progressColor = _getProgressColor(cnt); // 상태에 따라 색상 변경
+    double progress = chat["cnt"] / 3.0;
+    Color progressColor = _getProgressColor(chat["cnt"]);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 3,
       child: ListTile(
-        title: Row(
-          children: [
-            Text(
-              date, // YYYY-MM-DD (update_date 기준)
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              time, // HH:MM (update_date 기준)
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
+        title: Text(chat["date"], style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(subtitleText), // 종료 시간 또는 "퀴즈를 완료해보세요!"
+            Text(subtitleText),
             const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(5),
-              child: LinearProgressIndicator(
-                value: progress, // 진행 상태 (0.0 ~ 1.0)
-                backgroundColor: Colors.grey[300], // 배경색
-                valueColor: AlwaysStoppedAnimation<Color>(progressColor), // 진행 상태 색상
-                minHeight: 8,
-              ),
+            LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+              minHeight: 8,
             ),
           ],
         ),
@@ -215,17 +188,7 @@ class _ChatListPageState extends State<ChatListPage> {
     );
   }
 
-  /// 진행 상태(cnt)에 따른 색상 반환
   Color _getProgressColor(int cnt) {
-    switch (cnt) {
-      case 1:
-        return Colors.yellow;
-      case 2:
-        return Colors.orange;
-      case 3:
-        return Colors.blue;
-      default:
-        return Colors.grey; // 기본값 (0)
-    }
+    return [Colors.grey, Colors.yellow, Colors.orange, Colors.blue][cnt.clamp(0, 3)];
   }
 }
