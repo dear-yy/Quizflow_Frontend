@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quizflow_frontend/navigation_bar.dart';
-import 'package:quizflow_frontend/chat_page.dart';
+import 'package:quizflow_frontend/chat_list_page.dart';
 import 'package:quizflow_frontend/battle_page.dart';
 import 'package:quizflow_frontend/ranking_page.dart';
 import 'package:quizflow_frontend/settings_page.dart';
@@ -50,7 +50,7 @@ class _LoginSuccessPageState extends State<LoginSuccessPage> {
             });
           },
           children: [
-            ChatPage(),
+            ChatListPage(),
             BattlePage(),
             RankingPage(),
             SettingsPage(),
