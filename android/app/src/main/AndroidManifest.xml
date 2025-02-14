@@ -42,4 +42,6 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+    <!-- 한글 입력 키보드 작동 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

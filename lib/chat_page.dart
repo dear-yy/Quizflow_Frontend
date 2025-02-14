@@ -27,10 +27,11 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    _fetchMessages(); // ✅ 기존 메시지 불러오기
+    _fetchMessages();
     _initializeWebSocket();
   }
 
+  /// ✅ 기존 메시지 불러오기
   /// ✅ 기존 메시지 불러오기
   Future<void> _fetchMessages() async {
     try {
@@ -45,7 +46,6 @@ class _ChatPageState extends State<ChatPage> {
       }
 
       final url = Uri.parse("http://10.0.2.2:8000/quizroom/${widget.quizroomId}/message_list/");
-
       final response = await http.get(
         url,
         headers: {
@@ -55,39 +55,40 @@ class _ChatPageState extends State<ChatPage> {
       );
 
       if (response.statusCode == 200) {
-        final dynamic decodedData = jsonDecode(response.body);
+        final String decodedString = utf8.decode(response.bodyBytes);
+        final dynamic decodedData = jsonDecode(decodedString);
 
-        // ✅ 응답이 Map인지 확인 후 'messages' 키에서 리스트 추출
         if (decodedData is Map<String, dynamic> && decodedData.containsKey('messages')) {
-          final List<dynamic> messageList = decodedData['messages']; // ✅ 메시지 리스트 추출
+          final List<dynamic> messageList = decodedData['messages'];
 
           setState(() {
-            messages = parseMessages(messageList);
-            messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+            messages = messageList.map((message) => MessageModel(
+              quizroomId: message['quizroom'],
+              message: message['message'],
+              isGpt: message['is_gpt'] ?? false, // ✅ is_gpt 반영
+              timestamp: DateTime.parse(message['timestamp']),
+            )).toList()
+              ..sort((a, b) => a.timestamp.compareTo(b.timestamp)); // 정렬
+
+            scrollToBottom();
           });
         } else {
           setState(() {
             error = "서버 응답이 올바르지 않습니다.";
           });
         }
-      } else if (response.statusCode == 404) {
-        print("❌ [404] 메시지 리스트 API를 찾을 수 없습니다.");
-        setState(() {
-          error = "존재하지 않는 채팅방입니다.";
-        });
       } else {
-        print("❌ 메시지 불러오기 실패: ${response.statusCode} - ${utf8.decode(response.bodyBytes)}");
         setState(() {
-          error = "메시지를 불러오는 중 오류가 발생했습니다. (${response.statusCode})";
+          error = "메시지를 불러오는 중 오류 발생: (${response.statusCode})";
         });
       }
     } catch (e) {
-      print("❌ 메시지 불러오는 중 예외 발생: $e");
       setState(() {
         error = "서버에 연결할 수 없습니다.";
       });
     }
   }
+
 
   /// ✅ 웹소켓 연결 설정
   Future<void> _initializeWebSocket() async {
@@ -107,30 +108,55 @@ class _ChatPageState extends State<ChatPage> {
         token: token,
       );
 
-      // ✅ 웹소켓 메시지 수신
       webSocketService!.stream.listen(
             (event) {
-          final data = jsonDecode(event);
-          if (data.containsKey('message')) {
+          print("📥 [DEBUG] WebSocket 원본 데이터: $event");
+
+          if (event == null || event.toString().trim().isEmpty) {
+            print("⚠️ WebSocket에서 받은 데이터가 null 또는 빈 문자열입니다!");
+            return;
+          }
+
+          try {
+            final data = jsonDecode(event);
+
+            // 데이터 구조 확인
+            if (data is! Map<String, dynamic>) {
+              print("⚠️ 예상치 못한 데이터 형식: $data");
+              return;
+            }
+
+            if (!data.containsKey('message') || data['message'] == null) {
+              print("⚠️ WebSocket 데이터 오류: 'message' 필드가 없습니다.");
+              return;
+            }
+
+            print("📥 [DEBUG] 파싱된 데이터: $data");
+
+            final newMessage = MessageModel.fromJson(data);
+
             setState(() {
-              messages.add(MessageModel.fromJson(data));
-              messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+              messages.add(newMessage);
             });
+
             scrollToBottom();
+          } catch (e, stacktrace) {
+            print("❌ WebSocket 데이터 파싱 오류: $e");
+            print("🔍 스택 트레이스: $stacktrace");
           }
         },
         onError: (error) {
-          print("웹소켓 오류 발생: $error");
+          print("❌ WebSocket 오류 발생: $error");
           setState(() {
-            this.error = "서버에 연결할 수 없습니다.";
+            this.error = "서버 연결 오류";
           });
         },
         cancelOnError: true,
       );
+
     } catch (e) {
-      print("웹소켓 초기화 오류: $e");
       setState(() {
-        error = "서버에 연결할 수 없습니다.";
+        error = "서버 연결 실패";
       });
     }
   }
@@ -153,10 +179,8 @@ class _ChatPageState extends State<ChatPage> {
 
     webSocketService?.sendMessage(msg.message);
 
-
     setState(() {
       messages.add(msg);
-      messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     });
 
     controller.clear();
@@ -164,7 +188,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void scrollToBottom() {
-    Future.delayed(Duration(milliseconds: 100), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
         scrollController.animateTo(
           scrollController.position.maxScrollExtent,
@@ -190,9 +214,7 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: buildMessageList(),
-            ),
+            Expanded(child: buildMessageList()),
             ChatTextField(
               error: error,
               loading: isRunning,
@@ -212,7 +234,6 @@ class _ChatPageState extends State<ChatPage> {
       itemBuilder: (context, index) => buildMessageItem(
         message: messages[index],
         prevMessage: index > 0 ? messages[index - 1] : null,
-        index: index,
       ),
       separatorBuilder: (_, __) => SizedBox(height: 16.0),
     );
@@ -221,24 +242,25 @@ class _ChatPageState extends State<ChatPage> {
   Widget buildMessageItem({
     MessageModel? prevMessage,
     required MessageModel message,
-    required int index,
   }) {
     final isGpt = message.isGpt;
     final shouldDrawDateDivider =
         prevMessage == null || shouldDrawDate(prevMessage.timestamp, message.timestamp);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (shouldDrawDateDivider)
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
+            padding: EdgeInsets.symmetric(vertical: 8.0),
             child: DateDivider(date: message.timestamp),
           ),
         Padding(
           padding: EdgeInsets.only(left: isGpt ? 64.0 : 16.0, right: isGpt ? 16.0 : 64.0),
           child: Message(
             alignLeft: isGpt,
-            message: message.message.trim(), // ❌ JSON 전체가 출력될 가능성 있음
+            message: message.message.trim(),
+            timestamp: message.timestamp, // ✅ 시간 추가
           ),
         ),
       ],

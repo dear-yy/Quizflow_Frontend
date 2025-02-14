@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class MessageModel {
   final int quizroomId;
   final String message;
@@ -11,13 +13,12 @@ class MessageModel {
     required this.timestamp,
   });
 
-  // API 응답 JSON을 MessageModel로 변환하는 팩토리 메서드
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     return MessageModel(
-      quizroomId: json["quizroom"] ?? 0,
-      message: json["message"] ?? "",
-      isGpt: json["is_gpt"] ?? false,
-      timestamp: DateTime.parse(json["timestamp"]),
+      quizroomId: json['quizroomId'] ?? 0,
+      message: json['message'] ?? "⚠️ 서버에서 메시지를 정상적으로 받지 못했습니다.",
+      isGpt: json['isGpt'] ?? true,
+      timestamp: DateTime.tryParse(json['timestamp'] ?? "") ?? DateTime.now(),
     );
   }
 }

@@ -17,6 +17,7 @@ class ChatTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      keyboardType: TextInputType.text,
       controller: controller,
       cursorColor: Colors.blueAccent,
       textAlignVertical: TextAlignVertical.center,
