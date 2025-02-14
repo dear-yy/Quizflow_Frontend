@@ -7,6 +7,8 @@ import 'package:quizflow_frontend/component/date_divider.dart';
 import 'package:quizflow_frontend/component/message.dart';
 import 'package:quizflow_frontend/model/message_model.dart';
 import 'package:quizflow_frontend/services/web_socket_service.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart'; // URL 오픈을 위해 추가
 
 class ChatPage extends StatefulWidget {
   final int quizroomId;
@@ -27,11 +29,10 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    _fetchMessages();
     _initializeWebSocket();
+    _fetchMessages();
   }
 
-  /// ✅ 기존 메시지 불러오기
   /// ✅ 기존 메시지 불러오기
   Future<void> _fetchMessages() async {
     try {
@@ -45,7 +46,8 @@ class _ChatPageState extends State<ChatPage> {
         return;
       }
 
-      final url = Uri.parse("http://10.0.2.2:8000/quizroom/${widget.quizroomId}/message_list/");
+      final url = Uri.parse(
+          "http://10.0.2.2:8000/quizroom/${widget.quizroomId}/message_list/");
       final response = await http.get(
         url,
         headers: {
@@ -58,16 +60,18 @@ class _ChatPageState extends State<ChatPage> {
         final String decodedString = utf8.decode(response.bodyBytes);
         final dynamic decodedData = jsonDecode(decodedString);
 
-        if (decodedData is Map<String, dynamic> && decodedData.containsKey('messages')) {
+        if (decodedData is Map<String, dynamic> &&
+            decodedData.containsKey('messages')) {
           final List<dynamic> messageList = decodedData['messages'];
 
           setState(() {
-            messages = messageList.map((message) => MessageModel(
-              quizroomId: message['quizroom'],
-              message: message['message'],
-              isGpt: message['is_gpt'] ?? false, // ✅ is_gpt 반영
-              timestamp: DateTime.parse(message['timestamp']),
-            )).toList()
+            messages = messageList.map((message) =>
+                MessageModel(
+                  quizroomId: message['quizroom'],
+                  message: message['message'],
+                  isGpt: message['is_gpt'] ?? false, // ✅ is_gpt 반영
+                  timestamp: DateTime.parse(message['timestamp']),
+                )).toList()
               ..sort((a, b) => a.timestamp.compareTo(b.timestamp)); // 정렬
 
             scrollToBottom();
@@ -118,17 +122,17 @@ class _ChatPageState extends State<ChatPage> {
           }
 
           try {
-            final data = jsonDecode(event);
+            // ✅ 첫 번째 JSON 파싱
+            final Map<String, dynamic> data = jsonDecode(event);
 
-            // 데이터 구조 확인
-            if (data is! Map<String, dynamic>) {
-              print("⚠️ 예상치 못한 데이터 형식: $data");
-              return;
-            }
-
-            if (!data.containsKey('message') || data['message'] == null) {
-              print("⚠️ WebSocket 데이터 오류: 'message' 필드가 없습니다.");
-              return;
+            // ✅ message 필드가 또 다른 JSON 문자열이면 한 번 더 파싱
+            if (data.containsKey('message') && data['message'] is String) {
+              try {
+                String jsonString = data['message'].replaceAll("'", "\"");
+                data['message'] = jsonDecode(jsonString);
+              } catch (e) {
+                print("⚠️ message 필드 JSON 파싱 실패: $e");
+              }
             }
 
             print("📥 [DEBUG] 파싱된 데이터: $data");
@@ -168,7 +172,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void handleSendMessage(String message) {
-    if (message.trim().isEmpty) return;
+    if (message
+        .trim()
+        .isEmpty) return;
 
     final msg = MessageModel(
       quizroomId: widget.quizroomId,
@@ -231,13 +237,79 @@ class _ChatPageState extends State<ChatPage> {
     return ListView.separated(
       controller: scrollController,
       itemCount: messages.length,
-      itemBuilder: (context, index) => buildMessageItem(
-        message: messages[index],
-        prevMessage: index > 0 ? messages[index - 1] : null,
-      ),
+      itemBuilder: (context, index) =>
+          buildMessageItem(
+            message: messages[index],
+            prevMessage: index > 0 ? messages[index - 1] : null,
+          ),
       separatorBuilder: (_, __) => SizedBox(height: 16.0),
     );
   }
+
+  List<MessageModel> parseMessages(List<dynamic> messagesJson) {
+    return messagesJson.map((json) => MessageModel.fromJson(json)).toList();
+  }
+
+  // Widget buildMessageItem({
+  //   MessageModel? prevMessage,
+  //   required MessageModel message,
+  // }) {
+  //   final isGpt = message.isGpt;
+  //   final shouldDrawDateDivider =
+  //       prevMessage == null || shouldDrawDate(prevMessage.timestamp, message.timestamp);
+  //
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.center,
+  //     children: [
+  //       if (shouldDrawDateDivider)
+  //         Center(
+  //           child: Padding(
+  //             padding: EdgeInsets.symmetric(vertical: 8.0),
+  //             child: DateDivider(date: message.timestamp),
+  //           ),
+  //         ),
+  //       Align(
+  //         alignment: isGpt ? Alignment.centerLeft : Alignment.centerRight,
+  //         child: Padding(
+  //           padding: EdgeInsets.symmetric(horizontal: 16.0),
+  //           child: message.url != null && message.title != null
+  //               ? Column(
+  //             crossAxisAlignment:
+  //             isGpt ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+  //             children: [
+  //               RichText(
+  //                 text: TextSpan(
+  //                   text: message.title,
+  //                   style: TextStyle(
+  //                     color: Colors.blue,
+  //                     decoration: TextDecoration.underline,
+  //                   ),
+  //                   recognizer: TapGestureRecognizer()
+  //                     ..onTap = () {
+  //                       // Open the URL
+  //                     },
+  //                 ),
+  //               ),
+  //               if (message.reason != null)
+  //                 Padding(
+  //                   padding: EdgeInsets.only(top: 4.0),
+  //                   child: Text(
+  //                     message.reason!,
+  //                     style: TextStyle(color: Colors.grey[700]),
+  //                   ),
+  //                 ),
+  //             ],
+  //           )
+  //               : Message(
+  //             alignLeft: isGpt,
+  //             message: message.message.trim(),
+  //             timestamp: message.timestamp, // ✅ 시간 추가
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget buildMessageItem({
     MessageModel? prevMessage,
@@ -248,25 +320,81 @@ class _ChatPageState extends State<ChatPage> {
         prevMessage == null || shouldDrawDate(prevMessage.timestamp, message.timestamp);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (shouldDrawDateDivider)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: DateDivider(date: message.timestamp),
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: DateDivider(date: message.timestamp),
+            ),
           ),
-        Padding(
-          padding: EdgeInsets.only(left: isGpt ? 64.0 : 16.0, right: isGpt ? 16.0 : 64.0),
-          child: Message(
-            alignLeft: isGpt,
-            message: message.message.trim(),
-            timestamp: message.timestamp, // ✅ 시간 추가
+        Align(
+          alignment: isGpt ? Alignment.centerLeft : Alignment.centerRight,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: message.url != null && message.title != null
+                ? Column(
+              crossAxisAlignment:
+              isGpt ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    text: '📌 추천 아티클! "${message.title}"',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        final Uri uri = Uri.parse(message.url!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          print("❌ URL을 열 수 없습니다: ${message.url}");
+                        }
+                      },
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    text: '🔗 ${message.url}',
+                    style: TextStyle(
+                      color: Colors.blueAccent,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        final Uri uri = Uri.parse(message.url!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          print("❌ URL을 열 수 없습니다: ${message.url}");
+                        }
+                      },
+                  ),
+                ),
+                if (message.reason != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      '📝 추천 이유: ${message.reason!}',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                  ),
+              ],
+            )
+                : Message(
+              alignLeft: isGpt,
+              message: message.message.trim(),
+              timestamp: message.timestamp,
+            ),
           ),
         ),
       ],
     );
   }
-
 
   bool shouldDrawDate(DateTime date1, DateTime date2) {
     return getStringDate(date1) != getStringDate(date2);
