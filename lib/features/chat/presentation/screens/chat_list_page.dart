@@ -129,7 +129,7 @@ class _ChatListPageState extends State<ChatListPage> {
               elevation: 2,
               child: ListTile(
                 title: Text(
-                  "${chat["start_date"].split('T')[0]}",
+                  "${chat["start_date"].split('T')[0]} - 채팅방 ${chat["id"]}",
                   style: GoogleFonts.bebasNeue(fontSize: 20, color: Colors.black87),
                 ),
                 subtitle: Text(

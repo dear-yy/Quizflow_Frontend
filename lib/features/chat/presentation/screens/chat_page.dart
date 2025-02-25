@@ -169,8 +169,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: message.url != null && message.title != null
                 ? ArticleCard(title: message.title!, url: message.url!, reason: message.reason)
-                : message.criteria != null
-                ? FeedbackCard(criteria: message.criteria!, feedback: message.feedback!)
+                : message.feedback != null
+                ? FeedbackCard(feedback: message.feedback!)
                 : Message(alignLeft: isGpt, message: message.message.trim(), timestamp: message.timestamp),
           ),
         ),

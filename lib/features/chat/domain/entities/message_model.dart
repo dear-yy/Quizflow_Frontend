@@ -8,7 +8,6 @@ class MessageModel {
   final String? url;
   final String? title;
   final String? reason;
-  final Map<String, dynamic>? criteria; // ✅ 평가 기준 추가
   final Map<String, dynamic>? feedback; // ✅ 피드백 추가
 
   MessageModel({
@@ -19,7 +18,6 @@ class MessageModel {
     this.url,
     this.title,
     this.reason,
-    this.criteria,
     this.feedback,
   });
 
@@ -44,7 +42,6 @@ class MessageModel {
 
       // ✅ 2️⃣ 메시지 유형 구분
       bool isFeedback = messageData is Map<String, dynamic> &&
-          messageData.containsKey('criteria') &&
           messageData.containsKey('feedback');
 
       bool isArticle = messageData is Map<String, dynamic> &&
@@ -74,7 +71,6 @@ class MessageModel {
         url: url,
         title: title,
         reason: reason,
-        criteria: isFeedback ? messageData['criteria'] : null, // ✅ 평가 데이터 저장
         feedback: isFeedback ? messageData['feedback'] : null, // ✅ 피드백 저장
       );
     } catch (e) {

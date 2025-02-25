@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FeedbackCard extends StatelessWidget {
-  final Map<String, dynamic> criteria;
   final Map<String, dynamic> feedback;
 
-  const FeedbackCard({Key? key, required this.criteria, required this.feedback}) : super(key: key);
+  const FeedbackCard({Key? key, required this.feedback}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +29,9 @@ class FeedbackCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.lightbulb_outline, color: Color(0xFFe5bdb5), size: 22),
               const SizedBox(width: 8),
               Text(
-                "💡 AI 피드백 분석",
+                "💡 AI 피드백",
                 style: GoogleFonts.bebasNeue(
                   fontSize: 18,
                   color: const Color(0xFFe5bdb5),
@@ -43,14 +41,6 @@ class FeedbackCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // ✅ 평가 기준 출력 (한국어 변환 + 이모지 포함)
-          _buildSectionTitle("📊 평가 기준", true),
-          ...criteria.entries.map((entry) => _buildFeedbackRow(_convertKeyToKorean(entry.key), entry.value)),
-
-          const SizedBox(height: 12),
-          _buildSectionTitle("📖 피드백", true),
-
           // ✅ 피드백 출력 (한국어 변환 + 이모지 포함)
           _buildFeedbackRow("🧐 이해도 분석", feedback["understanding_feedback"]),
           _buildFeedbackRow("🚀 개선 방법", feedback["improvement_feedback"]),
