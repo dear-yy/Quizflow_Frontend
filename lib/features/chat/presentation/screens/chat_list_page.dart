@@ -132,9 +132,17 @@ class _ChatListPageState extends State<ChatListPage> {
                   "${chat["start_date"].split('T')[0]} - 채팅방 ${chat["id"]}",
                   style: GoogleFonts.bebasNeue(fontSize: 20, color: Colors.black87),
                 ),
-                subtitle: Text(
-                  "퀴즈 진행률: ${chat["cnt"]}/3",
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 5), // 텍스트와 진행 바 간격
+                    LinearProgressIndicator(
+                      value: chat["cnt"] / 3, // 진행률 (0.0 ~ 1.0)
+                      backgroundColor: Colors.grey[300], // 진행 바 배경색
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF176560)), // 진행 바 색상
+                      minHeight: 8, // 진행 바 높이
+                    ),
+                  ],
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
               ),
