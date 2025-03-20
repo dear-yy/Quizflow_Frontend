@@ -1,11 +1,11 @@
 import 'package:quizflow_frontend/features/battle/domain/repositories/battle_repository.dart';
 
-class StartBattleUseCase {
+class CancelBattleMatchUsecase {
   final BattleRepository repository;
 
-  StartBattleUseCase(this.repository);
+  CancelBattleMatchUsecase(this.repository);
 
   Future<String> execute() {
-    return repository.startBattle();
+    return repository.cancelBattleMatch();
   }
 }

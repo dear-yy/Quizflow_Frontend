@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quizflow_frontend/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:quizflow_frontend/features/chat/data/datasources/chat_websocket_data_source.dart';
 import 'package:quizflow_frontend/features/chat/data/repositories/chat_repository_impl.dart';
@@ -28,11 +27,19 @@ class _ChatListPageState extends State<ChatListPage> {
   late final CreateChatRoomUseCase createChatRoomUseCase;
   late final ChatRepository chatRepository;
 
+  bool _isDisposed = false; // ✅ dispose 상태 추적
+
   @override
   void initState() {
     super.initState();
     _setupDependencies();
     _fetchChatRooms();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // ✅ 위젯이 제거될 때 `_isDisposed`를 true로 설정
+    super.dispose();
   }
 
   void _setupDependencies() {
@@ -50,6 +57,11 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Future<void> _fetchChatRooms() async {
+    if (_isDisposed) {
+      print("❌[ERROR] ChatListPage가 이미 제거됨! setState() 실행 안 함.");
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -57,28 +69,45 @@ class _ChatListPageState extends State<ChatListPage> {
 
     try {
       final data = await getChatRoomsUseCase.execute();
+      if (!mounted) return; // ✅ mounted 체크 추가
+
       setState(() {
         chats = data;
         _isLoading = false;
       });
+
+      print("📥[DEBUG] 채팅방 불러오기 완료! ${chats.length}개"); // ✅ 몇 개 불러왔는지 확인
     } catch (error) {
+      if (!mounted) return; // ✅ mounted 체크 추가
+
       setState(() {
         _errorMessage = "채팅방 불러오기 실패: $error";
         _isLoading = false;
       });
+
+      print("❌[ERROR] 채팅방 불러오기 실패: $error"); // ✅ 오류 로그 추가
     }
   }
 
   Future<void> _createChatRoom() async {
+    if (_isDisposed) {
+      print("❌[ERROR] ChatListPage가 이미 제거됨! 채팅방 생성 요청 중단.");
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       int newQuizroomId = await createChatRoomUseCase.execute();
+      if (!mounted) return; // ✅ mounted 체크 추가
+
       await _fetchChatRooms();
       _enterChatRoom(newQuizroomId);
     } catch (error) {
+      if (!mounted) return; // ✅ mounted 체크 추가
+
       setState(() {
         _errorMessage = "채팅방 생성 실패: $error";
         _isLoading = false;
@@ -87,6 +116,11 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   void _enterChatRoom(int quizroomId) {
+    if (_isDisposed) {
+      print("❌[ERROR] ChatListPage가 제거됨! 채팅방 입장 중단.");
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -96,7 +130,10 @@ class _ChatListPageState extends State<ChatListPage> {
           connectWebSocketUseCase: ConnectWebSocketUseCase(chatRepository),
         ),
       ),
-    ).then((_) => _fetchChatRooms());
+    ).then((_) {
+      if (!mounted) return; // ✅ mounted 체크 추가
+      _fetchChatRooms();
+    });
   }
 
   @override

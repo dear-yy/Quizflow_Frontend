@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quizflow_frontend/features/chat/presentation/screens/chat_list_page.dart';
-import 'package:quizflow_frontend/features/battle/presentation/screens/battle_page.dart';
+import 'package:quizflow_frontend/features/battle/presentation/screens/battle_home_page.dart';
 import 'package:quizflow_frontend/features/ranking/presentations/screens/ranking_page.dart';
 import 'package:quizflow_frontend/features/profile/presentation/screens/settings_page.dart';
 import 'package:quizflow_frontend/features/home/presentation/screens/bottom_nav_bar.dart';
@@ -16,6 +16,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController(initialPage: 0);
+
+  @override
+  void initState() {
+    super.initState();
+    print("✅[DEBUG] HomePage initState 실행됨!");
+  }
 
   @override
   void dispose() {
@@ -56,19 +62,28 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Expanded(
-              child: PageView(
+              child: PageView.builder(
                 controller: _pageController,
+                itemCount: 4, // 페이지 개수
+                itemBuilder: (context, index) {
+                  switch (index) {
+                    case 0:
+                      return const ChatListPage();
+                    case 1:
+                      return const BattleHomePage();
+                    case 2:
+                      return const RankingPage();
+                    case 3:
+                      return const SettingsPage();
+                    default:
+                      return Container();
+                  }
+                },
                 onPageChanged: (index) {
                   setState(() {
                     _selectedIndex = index;
                   });
                 },
-                children: const [
-                  ChatListPage(),
-                  BattlePage(),
-                  RankingPage(),
-                  SettingsPage(),
-                ],
               ),
             ),
           ],

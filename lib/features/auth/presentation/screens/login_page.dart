@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:quizflow_frontend/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:quizflow_frontend/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:quizflow_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:quizflow_frontend/features/auth/domain/usecases/login_usecase.dart';
 import 'package:quizflow_frontend/features/auth/domain/usecases/register_usecase.dart';
 import 'package:quizflow_frontend/features/auth/presentation/screens/register_page.dart';
@@ -23,6 +22,16 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loginUser() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
@@ -34,6 +43,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final responseData = await widget.loginUseCase.execute(username, password);
+      
+      if(_isDisposed) return; // 위젯이 제거된 경우 실행 중단
+      
       final token = responseData['token'];
       final userPk = responseData['user_pk'];
 
@@ -41,6 +53,8 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.setString('token', token);
       await prefs.setInt('user_pk', userPk);
 
+      if (!mounted) return; // mounted 확인 후 화면 전환
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
@@ -51,6 +65,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showError(String message) {
+    if (!mounted) return; // 위젯 제거된 경우 실행 중단
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
