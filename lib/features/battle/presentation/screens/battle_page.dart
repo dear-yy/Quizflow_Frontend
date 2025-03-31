@@ -14,6 +14,7 @@ class BattlePage extends StatefulWidget {
   const BattlePage({
     Key? key,
     required this.battleRoomId,
+
   }) : super(key: key);
 
   @override
@@ -34,6 +35,8 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
   String? myRole;
   bool isOpponentFinished = false;
   bool isWaiting = false;
+  bool isBattleStarting = true; // 시작 중 다이얼로그용
+  bool hasArticleArrived = false; // 아티클 도착 여부(도착하면 배틀 타이머 시작)
 
   @override
   void initState() {
@@ -47,6 +50,11 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
     connectWebSocketUseCase = ConnectWebSocketUseCase(repo);
 
     _initializeWebSocket();
+
+    // 시작중... 다이얼로그 표시
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showStartingDialog(context);
+    });
   }
 
   @override
@@ -67,6 +75,18 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
     }
   }
 
+  void showStartingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text("배틀 시작 중"),
+        content: const Text("배틀을 시작 중입니다...\n잠시만 기다려주세요!"),
+      ),
+    );
+  }
+
+
   void _initializeWebSocket() {
     connectWebSocketUseCase.disconnect();
 
@@ -75,6 +95,16 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
       onNewMessage: (message) {
         setState(() {
           messages.add(message);
+
+          if (!hasArticleArrived && message.url != null && message.title != null) {
+            hasArticleArrived = true;
+            isBattleStarting = false;
+
+            // 다이얼로그 닫기
+            Navigator.of(context, rootNavigator: true).pop();
+
+            // 타이머 시작 가능 (필요 시 콜백으로 처리)
+          }
         });
         scrollToBottom();
       },
@@ -257,12 +287,13 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
       body: SafeArea(
         child: Column(
           children: [
-            BattleTimerProgressBar(
-              durationSeconds: 300,
+            hasArticleArrived
+                ? BattleTimerProgressBar(
               onTimerEnd: () {
                 print('타이머 종료!');
               },
-            ),
+            )
+                : const SizedBox.shrink(),
             Expanded(child: buildMessageList()),
             ChatTextField(
               error: error,

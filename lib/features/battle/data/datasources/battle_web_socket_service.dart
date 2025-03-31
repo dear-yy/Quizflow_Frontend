@@ -40,7 +40,7 @@ class BattleWebSocketService {
   }) {
     if (_isSetupConnected) return;
 
-    final url = Uri.parse("ws://172.20.10.3:8000/ws/battle/$battleroomId/");
+    final url = Uri.parse("ws://192.168.219.103:8000/ws/battle/$battleroomId/");
     _setupChannel = WebSocketChannel.connect(url);
 
     _setupChannel!.sink.add(jsonEncode({
@@ -59,7 +59,7 @@ class BattleWebSocketService {
         disconnectSetup();
       } else if (message['type'] == 'system') {
         final msg = message['message'] ?? '';
-        print("📡 시스템 메시지 수신: \a$msg");
+        print("📡 시스템 메시지 수신: \$msg");
 
         if (msg.contains("설정 완료")) {
           print("🎯 설정 완료 메시지 수신. Setup 종료 후 Battle 시작");
@@ -94,7 +94,7 @@ class BattleWebSocketService {
   }) {
     if (_isBattleConnected) return;
 
-    final url = Uri.parse("ws://172.20.10.3:8000/ws/battle/$battleroomId/$userPk/");
+    final url = Uri.parse("ws://192.168.219.103:8000/ws/battle/$battleroomId/$userPk/");
     _battleChannel = WebSocketChannel.connect(url);
 
     _battleChannel!.sink.add(jsonEncode({

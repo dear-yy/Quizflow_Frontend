@@ -18,7 +18,7 @@ class ChatRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/quizrooms/");
+    final url = Uri.parse("http://192.168.219.103:8000/quizrooms/");
     final response = await client.get(
       url,
       headers: {
@@ -43,7 +43,7 @@ class ChatRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/quizrooms/");
+    final url = Uri.parse("http://192.168.219.103:8000/quizrooms/");
     final response = await client.post(
       url,
       headers: {
@@ -70,7 +70,7 @@ class ChatRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/quizroom/$quizroomId/message_list/");
+    final url = Uri.parse("http://192.168.219.103:8000/quizroom/$quizroomId/message_list/");
     final response = await client.get(
       url,
       headers: {
