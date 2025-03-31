@@ -11,8 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   final LoginUseCase loginUseCase;
+  final RegisterUseCase registerUseCase;
 
-  const LoginPage({super.key, required this.loginUseCase});
+  const LoginPage({super.key, required this.loginUseCase, required this.registerUseCase});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -198,14 +199,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      final authRemoteDataSource = AuthRemoteDataSource(client: http.Client());
-                      final authRepository = AuthRepositoryImpl(authRemoteDataSource);
-                      final registerUseCase = RegisterUseCase(authRepository);
-
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RegisterPage(registerUseCase: registerUseCase),
+                          builder: (context) => RegisterPage(registerUseCase: widget.registerUseCase),
                         ),
                       );
                     },

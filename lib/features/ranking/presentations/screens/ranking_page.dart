@@ -1,93 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:quizflow_frontend/features/ranking/data/datasources/ranking_remote_data_source.dart';
-import 'package:quizflow_frontend/features/ranking/data/repositories/ranking_repository_impl.dart';
-import 'package:quizflow_frontend/features/ranking/domain/repositories/ranking_repository.dart';
-import 'package:quizflow_frontend/features/ranking/domain/usecases/get_ranking_usecase.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:quizflow_frontend/features/ranking/domain/entities/member_tile.dart';
 
-class RankingPage extends StatefulWidget {
+class RankingPage extends StatelessWidget {
   const RankingPage({super.key});
-
-  @override
-  State<RankingPage> createState() => _RankingPageState();
-}
-
-class _RankingPageState extends State<RankingPage> {
-  List<String> rankings = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  late final GetRankingUseCase getRankingUseCase;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupDependencies();
-    _fetchRankings();
-  }
-
-  void _setupDependencies() {
-    final httpClient = http.Client();
-    final rankingRemoteDataSource = RankingRemoteDataSource(client: httpClient);
-    final RankingRepository rankingRepository = RankingRepositoryImpl(rankingRemoteDataSource);
-    getRankingUseCase = GetRankingUseCase(rankingRepository);
-  }
-
-  Future<void> _fetchRankings() async {
-    try {
-      final data = await getRankingUseCase.execute();
-      if (!mounted) return; // ✅ 위젯이 dispose된 상태라면 setState 실행 방지
-      setState(() {
-        rankings = data;
-        _isLoading = false;
-      });
-    } catch (error) {
-      if (!mounted) return; // ✅ 위젯이 dispose된 상태라면 setState 실행 방지
-      setState(() {
-        _errorMessage = "랭킹 불러오기 실패: $error";
-        _isLoading = false;
-      });
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Top Rankings",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: rankings.isNotEmpty
-                ? ListView.builder(
-              itemCount: rankings.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Text("${index + 1}"),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            // 점수 퍼센트 + 설명 묶음
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFf0f0f0),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  CircularPercentIndicator(
+                    radius: 50,
+                    lineWidth: 12,
+                    animation: true,
+                    percent: 0.73,
+                    center: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "73",
+                          style: GoogleFonts.bebasNeue(
+                            fontSize: 24,
+                            color: const Color(0xFF176560),
+                          ),
+                        ),
+                        const Text("/100", style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                    circularStrokeCap: CircularStrokeCap.round,
+                    progressColor: const Color(0xFF176560),
+                    backgroundColor: const Color(0xFFd1e4e2),
                   ),
-                  title: Text(rankings[index]),
-                );
-              },
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Text(
+                      "60%의 다른 사용자보다 앞서 있어요!",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Top Members",
+                      style: GoogleFonts.bebasNeue(fontSize: 22, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView(
+                        children: const [
+                          MemberTile(rank: 1, name: "Davis Curtis", points: 2369),
+                          MemberTile(rank: 2, name: "Sinyang Park", points: 1469),
+                          MemberTile(rank: 3, name: "Terry Crews", points: 1053),
+                          MemberTile(rank: 4, name: "Amy Santiago", points: 990),
+                          MemberTile(rank: 5, name: "Tom Hanks", points: 800),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             )
-                : const Center(child: Text("랭킹 데이터 없음")),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _fetchRankings, // 버튼 클릭 시 랭킹 새로고침
-            child: const Text("Refresh Ranking"),
-          ),
-          const SizedBox(height: 20),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+

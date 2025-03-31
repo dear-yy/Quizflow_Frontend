@@ -1,43 +1,80 @@
 import 'dart:convert';
 
 class BattleMessageModel {
-  final int battleRoomId; // ✅ 배틀룸 ID
+  final int battleroomId;
   final String message;
-  final bool isSystemMessage; // ✅ 시스템 메시지 여부
+  final bool isGpt;
   final DateTime timestamp;
-  final String? playerRole; // ✅ 플레이어 역할 (player_1, player_2)
+  final String? url;
+  final String? title;
+  final Map<String, dynamic>? feedback; // ✅ 피드백 추가
 
   BattleMessageModel({
-    required this.battleRoomId,
+    required this.battleroomId,
     required this.message,
-    required this.isSystemMessage,
+    required this.isGpt,
     required this.timestamp,
-    this.playerRole,
+    this.url,
+    this.title,
+    this.feedback,
   });
 
-  /// ✅ WebSocket에서 받은 JSON을 `BattleMessageModel`로 변환
   factory BattleMessageModel.fromJson(Map<String, dynamic> json) {
+    dynamic messageData = json['message'];
     String finalMessage = "⚠️ 메시지 처리 실패";
-    bool isSystemMessage = json['type'] == "system";
-    String? playerRole = json['player_role']; // ✅ 플레이어 역할 추가
 
     try {
-      finalMessage = json['message'] ?? "⚠️ 메시지 없음";
+      // ✅ 1️⃣ `message`가 JSON 문자열이면 디코딩 시도
+      if (messageData is String) {
+        try {
+          if (messageData.contains("{") && messageData.contains("}")) {
+            print("🔍 messageData가 JSON 형식일 가능성 있음");
+            String jsonString = messageData.replaceAll("'", "\"");
+            messageData = jsonDecode(jsonString);
+          }
+        } catch (e) {
+          print("⚠️ JSON 파싱 실패: $e");
+          print("📌 원본 message 데이터: $messageData");
+        }
+      }
+
+      // ✅ 2️⃣ 메시지 유형 구분
+      bool isFeedback = messageData is Map<String, dynamic> &&
+          messageData.containsKey('feedback');
+
+      bool isArticle = messageData is Map<String, dynamic> &&
+          messageData.containsKey('url') &&
+          messageData.containsKey('title');
+
+      // ✅ 3️⃣ URL 메시지 처리
+      String? url = isArticle ? messageData['url'] as String? : null;
+      String? title = isArticle ? messageData['title'] as String? : null;
+
+      // ✅ 4️⃣ 최종 메시지 설정
+      if (isFeedback) {
+        finalMessage = "📋 AI 평가 피드백 제공됨";
+      } else if (isArticle) {
+        finalMessage = '📌 추천 아티클! "$title"\n🔗 $url';
+      } else {
+        finalMessage = messageData.toString();
+      }
 
       return BattleMessageModel(
-        battleRoomId: json['battle_room_id'] ?? 0,
+        battleroomId: json['quizroom'] ?? 0,
         message: finalMessage,
-        isSystemMessage: isSystemMessage,
+        isGpt: json['is_gpt'] ?? true,
         timestamp: DateTime.tryParse(json['timestamp'] ?? "") ?? DateTime.now(),
-        playerRole: playerRole, // ✅ 플레이어 역할 추가
+        url: url,
+        title: title,
+        feedback: isFeedback ? messageData['feedback'] : null,
       );
     } catch (e) {
-      print("⚠️ BattleMessageModel 파싱 오류 발생: $e");
+      print("⚠️ 전체 파싱 오류 발생: $e");
 
       return BattleMessageModel(
-        battleRoomId: json['battle_room_id'] ?? 0,
+        battleroomId: json['quizroom'] ?? 0,
         message: "⚠️ 메시지 처리 중 오류 발생",
-        isSystemMessage: true,
+        isGpt: json['is_gpt'] ?? true,
         timestamp: DateTime.now(),
       );
     }

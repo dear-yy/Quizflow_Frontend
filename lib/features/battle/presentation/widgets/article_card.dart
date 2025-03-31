@@ -6,13 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 class ArticleCard extends StatelessWidget {
   final String title;
   final String url;
-  final String? reason;
 
   const ArticleCard({
     Key? key,
     required this.title,
     required this.url,
-    this.reason,
   }) : super(key: key);
 
   Future<void> _launchURL() async {
@@ -76,17 +74,6 @@ class ArticleCard extends StatelessWidget {
                 recognizer: TapGestureRecognizer()..onTap = _launchURL,
               ),
             ),
-            if (reason != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                "📝 추천 이유:",
-                style: GoogleFonts.bebasNeue(fontSize: 16, color: Colors.black87),
-              ),
-              Text(
-                reason!,
-                style: GoogleFonts.bebasNeue(fontSize: 14, color: Colors.grey[700]),
-              ),
-            ],
           ],
         ),
       ),

@@ -8,7 +8,7 @@ class AuthRemoteDataSource {
 
   // 로그인 API 요청
   Future<Map<String, dynamic>> loginUser(String username, String password) async {
-    final url = Uri.parse("http://10.0.2.2:8000/users/login/");
+    final url = Uri.parse("http://172.20.10.3:8000/users/login/");
     final response = await client.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -29,15 +29,15 @@ class AuthRemoteDataSource {
     required String password,
     required String password2,
   }) async {
-    final url = Uri.parse("http://10.0.2.2:8000/users/register/");
+    final url = Uri.parse("http://172.20.10.3:8000/users/register/");
     final response = await client.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "username": username,
-        "email": email,
         "password": password,
         "password2": password2,
+        "email": email,
       }),
     );
 

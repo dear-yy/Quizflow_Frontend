@@ -4,6 +4,7 @@ import 'package:quizflow_frontend/features/auth/data/datasources/auth_remote_dat
 import 'package:quizflow_frontend/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:quizflow_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:quizflow_frontend/features/auth/domain/usecases/login_usecase.dart';
+import 'package:quizflow_frontend/features/auth/domain/usecases/register_usecase.dart';
 import 'package:quizflow_frontend/features/auth/presentation/screens/login_page.dart';
 
 void main() {
@@ -12,27 +13,38 @@ void main() {
 
   // 2️⃣ 데이터 소스 생성 (API 요청 담당)
   final AuthRemoteDataSource authRemoteDataSource = AuthRemoteDataSource(client: httpClient);
-
   // 3️⃣ 레포지토리 생성 (데이터 소스 활용)
   final AuthRepository authRepository = AuthRepositoryImpl(authRemoteDataSource);
 
   // 4️⃣ 유즈케이스 생성 (비즈니스 로직 담당)
   final LoginUseCase loginUseCase = LoginUseCase(authRepository);
+  final RegisterUseCase registerUseCase = RegisterUseCase(authRepository); // ✅ 이거 추가
 
   // 5️⃣ Flutter 앱 실행 (LoginPage에 유즈케이스 전달)
-  runApp(MyApp(loginUseCase: loginUseCase));
+  runApp(MyApp(
+    loginUseCase: loginUseCase,
+    registerUseCase: registerUseCase,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final LoginUseCase loginUseCase;
+  final RegisterUseCase registerUseCase;
 
-  const MyApp({super.key, required this.loginUseCase});
+  const MyApp({
+    super.key,
+    required this.loginUseCase,
+    required this.registerUseCase,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(loginUseCase: loginUseCase),
+      home: LoginPage(
+        loginUseCase: loginUseCase,
+        registerUseCase: registerUseCase,
+      ),
     );
   }
 }

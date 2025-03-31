@@ -18,7 +18,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://10.0.2.2:8000/battle/list/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/list/");
 
     try {
       final response = await client.get(
@@ -49,7 +49,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://10.0.2.2:8000/battle/match/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/match/");
     final response = await client.post(
       url,
       headers: {
@@ -59,10 +59,13 @@ class BattleRemoteDataSource {
       body: jsonEncode({}),
     );
 
+    final decodedBody = jsonDecode(utf8.decode(response.bodyBytes)); // 👈 한글 깨짐 방지
+
     if (response.statusCode == 200) {
-      return json.decode(utf8.decode(response.bodyBytes))['message'];
+      return decodedBody['message'];
     } else {
-      throw Exception("❌ 서버 응답: ${response.body}");
+      final errorMessage = decodedBody['error'] ?? "알 수 없는 오류";
+      throw Exception("❌ 서버 응답: $errorMessage");
     }
   }
 
@@ -75,7 +78,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://10.0.2.2:8000/battle/match/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/match/");
     final response = await client.get(
       url,
       headers: {
@@ -101,7 +104,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://10.0.2.2:8000/battle/new_room/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/new_room/");
     final response = await client.get(
       url,
       headers: {
@@ -140,7 +143,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://10.0.2.2:8000/battle/match/cancel/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/match/cancel/");
 
     try {
       final response = await client.get(
