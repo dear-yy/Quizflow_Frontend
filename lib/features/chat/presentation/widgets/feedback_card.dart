@@ -71,7 +71,6 @@ class FeedbackCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("🔹 ", style: TextStyle(fontSize: 16)), // ✅ 이모지 추가
           Expanded(
             child: RichText(
               text: TextSpan(
@@ -89,20 +88,5 @@ class FeedbackCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  // ✅ 평가 키 값을 한국어로 변환
-  String _convertKeyToKorean(String key) {
-    const Map<String, String> keyMap = {
-      "content_inclusion": "📌 핵심 포함 여부",
-      "keyword_usage": "🔤 키워드 사용 여부",
-      "objective_representation": "🧐 의도 왜곡 여부",
-      "length_limit": "📏 문장 길이 제한",
-      "fact_accuracy": "🔍 사실 정확성",
-      "understanding_feedback": "📖 이해도 피드백",
-      "improvement_feedback": "🚀 개선 방법",
-    };
-
-    return keyMap[key] ?? key; // 변환된 값이 없으면 기존 key 그대로 사용
   }
 }

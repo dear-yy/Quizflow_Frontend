@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_message_model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:http/http.dart' as http;
 
 /// WebSocket을 Setup 단계 → Battle 단계까지 관리하는 통합 클래스
 class BattleWebSocketService {
@@ -40,7 +41,7 @@ class BattleWebSocketService {
   }) {
     if (_isSetupConnected) return;
 
-    final url = Uri.parse("ws://192.168.219.103:8000/ws/battle/$battleroomId/");
+    final url = Uri.parse("ws://172.20.10.3:8000/ws/battle/$battleroomId/");
     _setupChannel = WebSocketChannel.connect(url);
 
     _setupChannel!.sink.add(jsonEncode({
@@ -55,11 +56,11 @@ class BattleWebSocketService {
       _setupStreamController.add(message);
 
       if (message['type'] == 'fail') {
-        print("❌ 인증 실패: \${message['message']}");
+        print("❌ 인증 실패: ${message['message']}");
         disconnectSetup();
       } else if (message['type'] == 'system') {
         final msg = message['message'] ?? '';
-        print("📡 시스템 메시지 수신: \$msg");
+        print("📡 시스템 메시지 수신: $msg");
 
         if (msg.contains("설정 완료")) {
           print("🎯 설정 완료 메시지 수신. Setup 종료 후 Battle 시작");
@@ -94,7 +95,7 @@ class BattleWebSocketService {
   }) {
     if (_isBattleConnected) return;
 
-    final url = Uri.parse("ws://192.168.219.103:8000/ws/battle/$battleroomId/$userPk/");
+    final url = Uri.parse("ws://172.20.10.3:8000/ws/battle/$battleroomId/$userPk/");
     _battleChannel = WebSocketChannel.connect(url);
 
     _battleChannel!.sink.add(jsonEncode({
@@ -109,42 +110,40 @@ class BattleWebSocketService {
 
       if (decoded["type"] == "user") {
         if (decoded.containsKey("message_content")) {
-          final contentStr = decoded["message_content"];
-          Map<String, dynamic> content;
-
+          print('message content 있음!!!');
+          print(decoded);
           try {
-            content = jsonDecode(contentStr);
+            final content = Map<String, dynamic>.from(decoded["message_content"]);
+            final String msg = content["message"] ?? "상대방이 먼저 종료했습니다.";
+            final bool isP1Done = content["player_1"] ?? false;
+            final bool isP2Done = content["player_2"] ?? false;
+            final int myRole = content["my_role"];
+            final bool iAmDone = myRole == 1 ? isP1Done : isP2Done;
+            final bool opponentDone = myRole == 1 ? isP2Done : isP1Done;
+
+            onReceiveRole?.call(myRole == 1 ? "player_1" : "player_2");
+
+            if (!iAmDone && opponentDone) {
+              onOpponentFinished?.call(msg);
+            } else if (iAmDone && !opponentDone) {
+              onWaitForOtherPlayer?.call();
+            } else if (iAmDone && opponentDone) {
+              onBothPlayersFinished?.call();
+            }
           } catch (e) {
-            print("⚠️ 종료 메시지 파싱 실패: \$e");
-            return;
+            print("❌ 종료 메시지 파싱 실패: $e");
+            onOpponentFinished?.call("상대방이 먼저 종료했을 수 있습니다.");
           }
-
-          final bool isP1Done = content["player_1"] ?? false;
-          final bool isP2Done = content["player_2"] ?? false;
-          final int myRole = content["my_role"];
-          final bool iAmDone = myRole == 1 ? isP1Done : isP2Done;
-          final bool opponentDone = myRole == 1 ? isP2Done : isP1Done;
-
-          onReceiveRole?.call(myRole == 1 ? "player_1" : "player_2");
-
-          if (!iAmDone && opponentDone) {
-            onOpponentFinished?.call("상대방이 먼저 종료되었습니다.");
-          } else if (iAmDone && !opponentDone) {
-            onWaitForOtherPlayer?.call();
-          } else if (iAmDone && opponentDone) {
-            onBothPlayersFinished?.call();
-          }
-
-          return;
         }
-
+        // 기존 일반 메시지 처리
         try {
           final messageModel = BattleMessageModel.fromJson(decoded);
           onNewMessage(messageModel);
         } catch (e) {
-          print("⚠️ GPT 메시지 파싱 실패: \$e");
+          print("⚠️ GPT 메시지 파싱 실패: $e");
         }
       }
+
     }, onError: (e) {
       print("❌ Battle WebSocket Error: \$e");
     }, onDone: () {
@@ -176,6 +175,25 @@ class BattleWebSocketService {
     _battleChannel?.sink.close();
     _battleStreamController.close();
     _isBattleConnected = false;
+  }
+
+  Future<void> sendDisconnectRequest(int userPk) async {
+    final url = Uri.parse("http://172.20.10.3:8000/battle/$battleroomId/disconnect/");
+    final now = DateTime.now().toUtc().toIso8601String();
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_pk": userPk,
+          "end_date": now,
+        }),
+      );
+      print("📤 disconnect 요청 완료: ${response.statusCode}");
+    } catch (e) {
+      print("❌ disconnect 요청 실패: $e");
+    }
   }
 
   void disconnectAll() {

@@ -20,7 +20,7 @@ class WebSocketService {
   void _connect() {
     if (_isConnected) return; // ✅ 중복 연결 방지
 
-    String url = "ws://192.168.219.103:8000/ws/chat/$quizroomId/";
+    String url = "ws://172.20.10.3:8000/ws/chat/$quizroomId/";
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
 

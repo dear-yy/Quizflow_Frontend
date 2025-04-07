@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_message_model.dart';
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_record.dart';
+import 'package:quizflow_frontend/features/battle/domain/entities/battle_result.dart';
 
 abstract class BattleRepository {
 
@@ -21,7 +22,11 @@ abstract class BattleRepository {
     required VoidCallback onBattleReady,
   });
 
-
   void sendMessage(String message);
+
   void disconnectWebSocket();
+
+  Future<void> sendDisconnectRequest(int battleRoomId);
+
+  Future<BattleResult?> fetchBattleResult(int battleroomId);
 }

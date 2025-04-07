@@ -24,41 +24,58 @@ class MessageModel {
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     dynamic messageData = json['message'];
     String finalMessage = "⚠️ 메시지 처리 실패";
+    Map<String, dynamic>? feedback;
+    String? url;
+    String? title;
+    String? reason;
 
     try {
-      // ✅ 1️⃣ `message`가 JSON 문자열이면 디코딩 시도
       if (messageData is String) {
         try {
-          if (messageData.contains("{") && messageData.contains("}")) {
-            print("🔍 messageData가 JSON 형식일 가능성 있음");
-            String jsonString = messageData.replaceAll("'", "\"");
-            messageData = jsonDecode(jsonString);
+          // ✅ 작은따옴표 JSON 전체를 큰따옴표 JSON으로 정확하게 변환하는 정규식
+          if (messageData.startsWith("{") && messageData.endsWith("}")) {
+            String correctedJson = messageData
+            // 키 교체
+                .replaceAllMapped(
+                RegExp(r"'([^']+)'\s*:\s*"), (m) => '"${m[1]}": ')
+            // 값 교체
+                .replaceAllMapped(
+                RegExp(r":\s*'([^']*)'"), (m) => ': "${m[1]}"');
+            messageData = jsonDecode(correctedJson);
+
+          } else {
+            throw const FormatException("Not JSON");
           }
         } catch (e) {
-          print("⚠️ JSON 파싱 실패: $e");
-          print("📌 원본 message 데이터: $messageData");
+          print("⚠️ JSON 파싱 실패, 원본 문자열로 처리: $e");
+          messageData = {'raw_message': messageData};
         }
       }
 
-      // ✅ 2️⃣ 메시지 유형 구분
-      bool isFeedback = messageData is Map<String, dynamic> &&
-          messageData.containsKey('feedback');
+      if (messageData is Map<String, dynamic>) {
+        bool isFeedback = messageData.containsKey('understanding_feedback') &&
+            messageData.containsKey('improvement_feedback');
 
-      bool isArticle = messageData is Map<String, dynamic> &&
-          messageData.containsKey('url') &&
-          messageData.containsKey('title');
+        bool isArticle =
+            messageData.containsKey('url') && messageData.containsKey('title');
 
-      // ✅ 3️⃣ URL 메시지 처리
-      String? url = isArticle ? messageData['url'] as String? : null;
-      String? title = isArticle ? messageData['title'] as String? : null;
-      String? reason = isArticle ? messageData['reason'] as String? : null;
-
-      // ✅ 4️⃣ 최종 메시지 설정
-      if (isFeedback) {
-        finalMessage = "📋 AI 평가 피드백 제공됨";
-      } else if (isArticle) {
-        finalMessage = '📌 추천 아티클! "$title"\n🔗 $url'
-            '${reason != null ? '\n📝 추천 이유: $reason' : ''}';
+        if (isFeedback) {
+          feedback = {
+            'understanding_feedback': messageData['understanding_feedback'],
+            'improvement_feedback': messageData['improvement_feedback'],
+          };
+          finalMessage = "📋 AI 평가 피드백 제공됨";
+        } else if (isArticle) {
+          url = messageData['url'] as String?;
+          title = messageData['title'] as String?;
+          reason = messageData['reason'] as String?;
+          finalMessage = '📌 추천 아티클! "$title"\n🔗 $url'
+              '${reason != null ? '\n📝 추천 이유: $reason' : ''}';
+        } else if (messageData.containsKey('raw_message')) {
+          finalMessage = messageData['raw_message'];
+        } else {
+          finalMessage = messageData.toString();
+        }
       } else {
         finalMessage = messageData.toString();
       }
@@ -71,11 +88,10 @@ class MessageModel {
         url: url,
         title: title,
         reason: reason,
-        feedback: isFeedback ? messageData['feedback'] : null, // ✅ 피드백 저장
+        feedback: feedback,
       );
     } catch (e) {
       print("⚠️ 전체 파싱 오류 발생: $e");
-
       return MessageModel(
         quizroomId: json['quizroom'] ?? 0,
         message: "⚠️ 메시지 처리 중 오류 발생",

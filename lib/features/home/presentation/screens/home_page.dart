@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
                     case 1:
                       return const BattleHomePage();
                     case 2:
-                      return const RankingPage();
+                      return RankingPage(key: ValueKey(DateTime.now().millisecondsSinceEpoch));
                     case 3:
                       return const SettingsPage();
                     default:

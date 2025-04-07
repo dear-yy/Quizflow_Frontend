@@ -85,6 +85,16 @@ class BattleWebSocketDataSource {
     _webSocketService?.sendBattleMessage(message);
   }
 
+  Future<void> disconnectWithServerEndDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userPk = prefs.getInt('user_pk');
+
+    if (userPk == null) return;
+
+    print("✅ [DATASOURCE] userPk: $userPk");
+    await _webSocketService?.sendDisconnectRequest(userPk);
+  }
+
   void disconnect() {
     print("❎ [DISCONNECT] WebSocket 종료 시도");
     _setupSubscription?.cancel();

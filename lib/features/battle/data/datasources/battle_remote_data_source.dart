@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_record.dart';
+import 'package:quizflow_frontend/features/battle/domain/entities/battle_result.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// ✅ API 요청을 담당하는 데이터 소스
@@ -18,7 +20,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/battle/list/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/list/");
 
     try {
       final response = await client.get(
@@ -49,7 +51,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/battle/match/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/match/");
     final response = await client.post(
       url,
       headers: {
@@ -59,7 +61,8 @@ class BattleRemoteDataSource {
       body: jsonEncode({}),
     );
 
-    final decodedBody = jsonDecode(utf8.decode(response.bodyBytes)); // 👈 한글 깨짐 방지
+    final decodedBody = jsonDecode(
+        utf8.decode(response.bodyBytes)); // 👈 한글 깨짐 방지
 
     if (response.statusCode == 200) {
       return decodedBody['message'];
@@ -78,7 +81,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/battle/match/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/match/");
     final response = await client.get(
       url,
       headers: {
@@ -104,7 +107,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/battle/new_room/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/new_room/");
     final response = await client.get(
       url,
       headers: {
@@ -143,7 +146,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/battle/match/cancel/");
+    final url = Uri.parse("http://172.20.10.3:8000/battle/match/cancel/");
 
     try {
       final response = await client.get(
@@ -169,4 +172,60 @@ class BattleRemoteDataSource {
       return "취소 요청 실패: $e"; // ✅ 예외 발생 시 기본 메시지 반환 (앱 크래시 방지)
     }
   }
+
+  Future<void> sendDisconnectRequest(int battleRoomId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      throw Exception("유저 토큰 정보 없음");
+    }
+
+    final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    final url = Uri.parse("http://172.20.10.3:8000/battle/$battleRoomId/disconnect/");
+
+    final response = await client.patch(
+      url,
+      headers: {
+        "Authorization": "Token $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "end_date": now,
+      }),
+    );
+
+    print("🔍 응답 상태 코드: ${response.statusCode}");
+    print("🔍 응답 바디: ${utf8.decode(response.bodyBytes)}");
+
+    if (response.statusCode != 200) {
+      throw Exception("disconnect 요청 실패: ${response.body}");
+    }
+
+    print("✅ disconnect 성공: $battleRoomId");
+  }
+
+  Future<BattleResult?> fetchBattleResult(int battleroomId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token == null) return null;
+
+    final url = Uri.parse("http://172.20.10.3:8000/battle/$battleroomId/result/");
+    final response = await client.get(
+      url,
+      headers: {
+        "Authorization": "Token $token",
+        "Content-Type": "application/json"
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      return BattleResult.fromJson(jsonData);
+    } else {
+      print("❌ 결과 요청 실패: ${response.body}");
+      return null;
+    }
+  }
+
 }

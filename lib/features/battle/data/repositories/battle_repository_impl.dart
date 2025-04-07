@@ -5,6 +5,7 @@ import 'package:quizflow_frontend/features/battle/data/datasources/battle_web_so
 import 'package:quizflow_frontend/features/battle/data/datasources/battle_websocket_data_source.dart';
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_message_model.dart';
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_record.dart';
+import 'package:quizflow_frontend/features/battle/domain/entities/battle_result.dart';
 import 'package:quizflow_frontend/features/battle/domain/repositories/battle_repository.dart';
 
 class BattleRepositoryImpl implements BattleRepository {
@@ -51,6 +52,11 @@ class BattleRepositoryImpl implements BattleRepository {
 
 
   @override
+  Future<void> sendDisconnectRequest(int battleRoomId) async {
+    await battleRemoteDataSource.sendDisconnectRequest(battleRoomId); // ✅ 전달
+  }
+
+  @override
   void sendMessage(String message) {
     battleWebSocketDataSource.sendMessage(message);
   }
@@ -60,4 +66,7 @@ class BattleRepositoryImpl implements BattleRepository {
     battleWebSocketDataSource.disconnect();
   }
 
+  Future<BattleResult?> fetchBattleResult(int battleroomId) async {
+    return await battleRemoteDataSource.fetchBattleResult(battleroomId);
+  }
 }

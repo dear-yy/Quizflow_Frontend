@@ -4,3 +4,4 @@ export 'date_divider.dart';
 export 'feedback_card.dart';
 export 'message.dart';
 export 'battle_timer_bar.dart';
+export 'battle_result_dialog.dart';

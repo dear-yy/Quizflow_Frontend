@@ -19,7 +19,7 @@ class ProfileRemoteDataSource {
       throw Exception("로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/users/profile/$userPk/");
+    final url = Uri.parse("http://172.20.10.3:8000/users/profile/$userPk/");
     final response = await client.get(
       url,
       headers: {
@@ -44,7 +44,7 @@ class ProfileRemoteDataSource {
       throw Exception("사용자 인증 정보 없음");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/users/profile/$userPk/");
+    final url = Uri.parse("http://172.20.10.3:8000/users/profile/$userPk/");
     final request = http.MultipartRequest("PUT", url)
       ..headers["Authorization"] = "Token $token"
       ..files.add(await http.MultipartFile.fromPath('image', image.path));
@@ -64,7 +64,7 @@ class ProfileRemoteDataSource {
       throw Exception("사용자 인증 정보 없음");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/users/profile/$userPk/");
+    final url = Uri.parse("http://172.20.10.3:8000/users/profile/$userPk/");
     final response = await client.put(
       url,
       headers: {"Authorization": "Token $token", "Content-Type": "application/json"},
@@ -84,7 +84,7 @@ class ProfileRemoteDataSource {
       throw Exception("사용자 인증 정보 없음");
     }
 
-    final url = Uri.parse("http://192.168.219.103:8000/users/account/delete/");
+    final url = Uri.parse("http://172.20.10.3:8000/users/account/delete/");
     final response = await client.delete(
       url,
       headers: {"Authorization": "Token $token", "Content-Type": "application/json"},

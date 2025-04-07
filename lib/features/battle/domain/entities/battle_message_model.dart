@@ -7,7 +7,7 @@ class BattleMessageModel {
   final DateTime timestamp;
   final String? url;
   final String? title;
-  final Map<String, dynamic>? feedback; // ✅ 피드백 추가
+  final bool? disconnect; // ✅ 피드백 추가
 
   BattleMessageModel({
     required this.battleroomId,
@@ -16,47 +16,61 @@ class BattleMessageModel {
     required this.timestamp,
     this.url,
     this.title,
-    this.feedback,
+    this.disconnect,
   });
 
   factory BattleMessageModel.fromJson(Map<String, dynamic> json) {
-    dynamic messageData = json['message'];
-    String finalMessage = "⚠️ 메시지 처리 실패";
-
     try {
-      // ✅ 1️⃣ `message`가 JSON 문자열이면 디코딩 시도
-      if (messageData is String) {
+      dynamic rawMessage = json['message'];
+      dynamic messageContent = json['message_content'];
+      String finalMessage = "⚠️ 메시지 처리 실패";
+      String? url;
+      String? title;
+      bool isDisconnect = json['disconnect'] ?? false;
+
+      // ✅ 1. 우선 message_content가 존재할 경우 우선 처리
+      if (messageContent != null) {
         try {
-          if (messageData.contains("{") && messageData.contains("}")) {
-            print("🔍 messageData가 JSON 형식일 가능성 있음");
-            String jsonString = messageData.replaceAll("'", "\"");
-            messageData = jsonDecode(jsonString);
+          if (messageContent is String && messageContent.contains("{")) {
+            messageContent = jsonDecode(messageContent.replaceAll("'", "\""));
+          }
+
+          if (messageContent is Map<String, dynamic> && messageContent.containsKey("message")) {
+            rawMessage = messageContent;
           }
         } catch (e) {
-          print("⚠️ JSON 파싱 실패: $e");
-          print("📌 원본 message 데이터: $messageData");
+          print("⚠️ message_content 파싱 실패: $e");
         }
       }
 
-      // ✅ 2️⃣ 메시지 유형 구분
-      bool isFeedback = messageData is Map<String, dynamic> &&
-          messageData.containsKey('feedback');
+      // ✅ 2. message 자체가 JSON 문자열일 경우 파싱
+      if (rawMessage is String) {
+        try {
+          if (rawMessage.contains("{") && rawMessage.contains("}")) {
+            rawMessage = jsonDecode(rawMessage.replaceAll("'", "\""));
+          }
+        } catch (e) {
+          print("⚠️ message 파싱 실패: $e");
+        }
+      }
 
-      bool isArticle = messageData is Map<String, dynamic> &&
-          messageData.containsKey('url') &&
-          messageData.containsKey('title');
+      print("📥 최종 처리 대상 message: $rawMessage");
 
-      // ✅ 3️⃣ URL 메시지 처리
-      String? url = isArticle ? messageData['url'] as String? : null;
-      String? title = isArticle ? messageData['title'] as String? : null;
-
-      // ✅ 4️⃣ 최종 메시지 설정
-      if (isFeedback) {
-        finalMessage = "📋 AI 평가 피드백 제공됨";
-      } else if (isArticle) {
-        finalMessage = '📌 추천 아티클! "$title"\n🔗 $url';
+      // ✅ 3. 종료 메시지 또는 아티클 판단
+      if (rawMessage is Map<String, dynamic>) {
+        if (rawMessage.containsKey("player_1") && rawMessage.containsKey("player_2")) {
+          finalMessage = rawMessage["message"] ?? "🎯 종료 메시지 수신";
+        } else if (rawMessage.containsKey("url") && rawMessage.containsKey("title")) {
+          url = rawMessage["url"];
+          title = rawMessage["title"];
+          finalMessage = '📌 추천 아티클! "$title"\n🔗 $url';
+        } else if (rawMessage.containsKey("message")) {
+          finalMessage = rawMessage["message"].toString();
+        } else {
+          finalMessage = rawMessage.toString();
+        }
       } else {
-        finalMessage = messageData.toString();
+        finalMessage = rawMessage.toString();
       }
 
       return BattleMessageModel(
@@ -66,14 +80,13 @@ class BattleMessageModel {
         timestamp: DateTime.tryParse(json['timestamp'] ?? "") ?? DateTime.now(),
         url: url,
         title: title,
-        feedback: isFeedback ? messageData['feedback'] : null,
+        disconnect: isDisconnect,
       );
     } catch (e) {
-      print("⚠️ 전체 파싱 오류 발생: $e");
-
+      print("❌ 전체 메시지 파싱 실패: $e");
       return BattleMessageModel(
         battleroomId: json['quizroom'] ?? 0,
-        message: "⚠️ 메시지 처리 중 오류 발생",
+        message: "⚠️ 메시지 파싱 오류 발생",
         isGpt: json['is_gpt'] ?? true,
         timestamp: DateTime.now(),
       );

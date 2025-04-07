@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:quizflow_frontend/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:quizflow_frontend/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:quizflow_frontend/features/auth/domain/usecases/login_usecase.dart';
+import 'package:quizflow_frontend/features/auth/domain/usecases/register_usecase.dart';
+import 'package:quizflow_frontend/features/auth/presentation/screens/login_page.dart';
 import 'package:quizflow_frontend/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:quizflow_frontend/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:quizflow_frontend/features/profile/domain/repositories/profile_repository.dart';
@@ -10,6 +15,7 @@ import 'package:quizflow_frontend/features/profile/domain/usecases/get_profile_u
 import 'package:quizflow_frontend/features/profile/domain/usecases/update_profile_image_usecase.dart';
 import 'package:quizflow_frontend/features/profile/domain/usecases/update_nickname_usecase.dart';
 import 'package:quizflow_frontend/features/profile/domain/usecases/delete_account_usecase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -103,6 +109,33 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    await prefs.remove('user_pk');
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginPage(
+          loginUseCase: LoginUseCase(
+            AuthRepositoryImpl(
+              AuthRemoteDataSource(client: http.Client()),
+            ),
+          ),
+          registerUseCase: RegisterUseCase(
+            AuthRepositoryImpl(
+              AuthRemoteDataSource(client: http.Client()),
+            ),
+          ),
+        ),
+      ),
+          (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,6 +183,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF176560)),
                     child: const Text("닉네임 변경", style: TextStyle(color: Colors.white)),
+                  ),
+                  ElevatedButton(
+                    onPressed: _logout,
+                    style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFe57373)), // 붉은색 로그아웃 버튼
+                    child: const Text("로그아웃", style: TextStyle(color: Colors.white)),
                   ),
                   ElevatedButton(
                     onPressed: _deleteAccount,
