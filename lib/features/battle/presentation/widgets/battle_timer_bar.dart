@@ -7,7 +7,7 @@ class BattleTimerProgressBar extends StatefulWidget {
 
   const BattleTimerProgressBar({
     Key? key,
-    this.durationSeconds = 900, // 기본값: 15분 (900초)
+    this.durationSeconds = 900, /// 기본값: 15분 (900초)
     this.onTimerEnd,
   }) : super(key: key);
 

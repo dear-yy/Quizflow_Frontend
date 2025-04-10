@@ -15,8 +15,8 @@ class ConnectWebSocketUseCase {
     required Function(BattleMessageModel) onNewMessage,
     required VoidCallback onBattleReady,
     required Function(String) onOpponentFinished,
-    required VoidCallback onWaitForOtherPlayer,
-    required VoidCallback onBothPlayersFinished,
+    required Function(String) onWaitForOtherPlayer,
+    required Function(String) onBothPlayersFinished,
     required Function(String) onReceiveRole,
   }) async {
     final prefs = await SharedPreferences.getInstance();

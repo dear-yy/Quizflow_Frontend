@@ -34,8 +34,8 @@ class BattleRepositoryImpl implements BattleRepository {
     required int battleroomId,
     required Function(BattleMessageModel) onNewMessage,
     required Function(String) onOpponentFinished,
-    required VoidCallback onWaitForOtherPlayer,
-    required VoidCallback onBothPlayersFinished,
+    required Function(String) onWaitForOtherPlayer,
+    required Function(String) onBothPlayersFinished,
     required Function(String) onReceiveRole,
     required VoidCallback onBattleReady,
   }) {
@@ -65,6 +65,7 @@ class BattleRepositoryImpl implements BattleRepository {
   void disconnectWebSocket() {
     battleWebSocketDataSource.disconnect();
   }
+
 
   Future<BattleResult?> fetchBattleResult(int battleroomId) async {
     return await battleRemoteDataSource.fetchBattleResult(battleroomId);

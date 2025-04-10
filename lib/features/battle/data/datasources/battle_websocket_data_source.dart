@@ -20,8 +20,8 @@ class BattleWebSocketDataSource {
     required Function(BattleMessageModel) onNewMessage,
     required VoidCallback onBattleReady,
     required Function(String) onOpponentFinished,
-    required VoidCallback onWaitForOtherPlayer,
-    required VoidCallback onBothPlayersFinished,
+    required Function(String) onWaitForOtherPlayer,
+    required Function(String) onBothPlayersFinished,
     required Function(String) onReceiveRole,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -62,16 +62,16 @@ class BattleWebSocketDataSource {
         onNewMessage(msg);
       },
       onOpponentFinished: (msg) {
-        print("⚠️ [BATTLE] 상대 종료 감지: \$msg");
+        print("⚠️ [BATTLE] \$msg");
         onOpponentFinished(msg);
       },
-      onWaitForOtherPlayer: () {
-        print("⏳ [BATTLE] 내가 먼저 종료됨. 상대 대기 중...");
-        onWaitForOtherPlayer();
+      onWaitForOtherPlayer: (msg) {
+        print("⏳ [BATTLE] \$msg");
+        onWaitForOtherPlayer(msg);
       },
-      onBothPlayersFinished: () {
-        print("🌟 [BATTLE] 모두 종료됨. 결과창 표시 예정");
-        onBothPlayersFinished();
+      onBothPlayersFinished: (msg) {
+        print("🌟 [BATTLE] \$msg");
+        onBothPlayersFinished(msg);
       },
       onReceiveRole: (role) {
         print("🧑‍🤝🧒 [BATTLE] 내 역할 수신됨: \$role");

@@ -171,7 +171,7 @@ class _BattleHomePageState extends State<BattleHomePage> {
   }
 
   Future<void> _enterBattleRoom(BuildContext context, int roomId) async {
-    Navigator.pop(context);
+    Navigator.pop(context); // 매칭 다이얼로그 닫기
 
     Navigator.push(
       context,
@@ -180,7 +180,12 @@ class _BattleHomePageState extends State<BattleHomePage> {
           battleRoomId: roomId,
         ),
       ),
-    );
+    ).then((_) {
+      // BattlePage에서 돌아오면 배틀 기록을 다시 불러옴
+      if (mounted) {
+        _fetchBattleRooms();
+      }
+    });
   }
 
   @override

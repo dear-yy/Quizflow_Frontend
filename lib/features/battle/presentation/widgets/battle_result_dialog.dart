@@ -88,7 +88,7 @@ void showResultDialog(BuildContext context, BattleResult result) {
           ),
           onPressed: () {
             Navigator.pop(context); // ✅ 다이얼로그 닫기
-            Navigator.pop(context);
+            Navigator.popUntil(context, (route) => route.isFirst);
            },
           child: const Text("홈으로 가기"),
         ),

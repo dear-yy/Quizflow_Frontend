@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_message_model.dart';
-import 'package:quizflow_frontend/features/battle/domain/entities/battle_result.dart';
 import 'package:quizflow_frontend/features/battle/domain/usecases/connect_websocket_usecase.dart';
 import 'package:quizflow_frontend/features/battle/data/datasources/battle_remote_data_source.dart';
 import 'package:quizflow_frontend/features/battle/data/datasources/battle_websocket_data_source.dart';
@@ -24,10 +23,10 @@ class BattlePage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<BattlePage> createState() => _ChatPageState();
+  State<BattlePage> createState() => _BattlePageState();
 }
 
-class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
+class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
   final ScrollController scrollController = ScrollController();
   final TextEditingController controller = TextEditingController();
 
@@ -45,6 +44,7 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
   bool isBattleStarting = true; // 시작 중 다이얼로그용
   bool hasArticleArrived = false; // 아티클 도착 여부(도착하면 배틀 타이머 시작)
   bool hasDisconnectedAfterFeedback = false;
+  bool _isDialogOpen = false;
 
   @override
   void initState() {
@@ -119,44 +119,28 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
             isBattleStarting = false;
             Navigator.of(context, rootNavigator: true).pop(); // 다이얼로그 닫기
           }
-
-          // ✅ ⛳️ message_content 처리
-          try {
-            final decoded = jsonDecode(message.message);
-            if (decoded is Map<String, dynamic> &&
-                decoded.containsKey("player_1") &&
-                decoded.containsKey("player_2") &&
-                decoded.containsKey("my_role") &&
-                decoded.containsKey("message")) {
-              final popupMsg = decoded["message"];
-              print("🚀🚀 ${popupMsg}");
-              showTemporaryPopup(context, popupMsg);
-            }
-          } catch (e) {
-            // 메시지가 JSON 형식이 아닐 수도 있으므로 무시
-          }
         });
         scrollToBottom();
       },
 
       onBattleReady: () => print("배틀 시작 준비 완료"),
       onOpponentFinished: (msg) => showTemporaryPopup(context, msg),
-      onWaitForOtherPlayer: () {
-      showTemporaryPopup(context, "상대방이 아직 문제를 풀고 있어요!");
-    },
-        onBothPlayersFinished: () async {
-          connectWebSocketUseCase.disconnect();
-          _isWebSocketConnected = false;
+      onWaitForOtherPlayer: (msg) {
+      showTemporaryPopup(context, msg);
+      },
+      onBothPlayersFinished: (msg) async {
+        connectWebSocketUseCase.disconnect();
+        _isWebSocketConnected = false;
 
-          final result = await fetchBattleResultUseCase(widget.battleRoomId);
+        final result = await fetchBattleResultUseCase(widget.battleRoomId);
 
-          if (result != null) {
-            showResultDialog(context, result);
-          } else {
-            showErrorDialog(context, "결과를 불러오는 데 실패했습니다.");
-          }
+        if (result != null) {
+          showResultDialog(context, result);
+        } else {
+          showErrorDialog(context, "결과를 불러오는 데 실패했습니다.");
+        }
         },
-        onReceiveRole: (role) => myRole = role,
+      onReceiveRole: (role) => myRole = role,
     );
 
     _isWebSocketConnected = true;
@@ -172,11 +156,7 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const BattleHomePage()),
-                    (route) => false,
-              );
+              Navigator.popUntil(context, (route) => route.isFirst);
             },
             child: const Text("돌아가기"),
           )
@@ -239,23 +219,13 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
 
     // ⛳️ disconnect == true이면, disconnect 요청 (단 한 번만)
     if (message.disconnect == true && !hasDisconnectedAfterFeedback) {
-      hasDisconnectedAfterFeedback = true;
       Future.microtask(() async {
         print("🔌 disconnect == true 감지. disconnect API 전송 시도");
         await sendDisconnectUseCase(widget.battleRoomId);
         print("📤 disconnect 전송 완료");
+        hasDisconnectedAfterFeedback = true;
       });
     }
-
-    print("📦 받은 메시지: ${jsonEncode({
-      'battleroomId': message.battleroomId,
-      'message': message.message,
-      'isGpt': message.isGpt,
-      'timestamp': message.timestamp.toIso8601String(),
-      'url': message.url,
-      'title': message.title,
-      'disconnect': message.disconnect,
-    })}");
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -340,51 +310,154 @@ class _ChatPageState extends State<BattlePage> with WidgetsBindingObserver {
   }
 
   void showWaitingDialog(BuildContext context) {
-    // 삭제할 방법 찾기
-    // showDialog(
-    //   context: context,
-    //   barrierDismissible: false,
-    //   builder: (_) => AlertDialog(
-    //     title: const Text("잠시만요!"),
-    //     content: const Text("상대방이 아직 문제를 풀고 있어요.\n조금만 기다려 주세요."),
-    //   ),
-    // );
+    _isDialogOpen = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 🔒 뒤로가기 및 터치로 닫히지 않게
+      builder: (_) => AlertDialog(
+        title: const Text("배틀 퀴즈에서 나가시겠습니까?"),
+        content: const Text("상대방이 배틀 퀴즈를 완료 한 후 결과를 확인해 보실 수 있어요."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _isDialogOpen = false;
+              connectWebSocketUseCase.disconnect();
+              _isWebSocketConnected = false;
+
+              Navigator.of(context).pop(); // 다이얼로그 닫기
+              Navigator.popUntil(context, (route) => route.isFirst); // 홈으로 복귀
+            },
+            child: const Text("닫기"),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _isDialogOpen = false; // 다이얼로그가 닫히면 상태 리셋
+    });
   }
+
+  void showExitConfirmationDialog(BuildContext context) {
+    _isDialogOpen = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text("배틀 퀴즈를 나가시겠습니까?"),
+        content: const Text("결과는 상대방이 완료된 후 확인해보실 수 있습니다."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _isDialogOpen = false;
+              Navigator.of(context).pop(); // 취소
+            },
+            child: const Text("취소"),
+          ),
+          TextButton(
+            onPressed: () async {
+              _isDialogOpen = false;
+              await _handleDisconnect(widget.battleRoomId);
+              Navigator.of(context).pop(); // 팝업 닫기
+              connectWebSocketUseCase.disconnect();
+              _isWebSocketConnected = false;
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+            child: const Text("확인"),
+          ),
+        ],
+      ),
+    ).then((_) {_isDialogOpen = false;
+    });
+  }
+
+  Future<void> fetchBattleResultWithRetry(int battleRoomId) async {
+    const int maxAttempts = 5;
+    const Duration retryDelay = Duration(seconds: 2);
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      print("🔁 결과 재시도: $attempt/$maxAttempts");
+
+      final result = await fetchBattleResultUseCase(battleRoomId);
+
+      if (result != null) {
+        Navigator.of(context, rootNavigator: true).maybePop(); // 로딩 다이얼로그 닫기
+        showResultDialog(context, result);
+        return;
+      }
+
+      await Future.delayed(retryDelay);
+    }
+
+    Navigator.of(context, rootNavigator: true).maybePop(); // 로딩 다이얼로그 닫기
+    showErrorDialog(context, "결과를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () async {
-            await _handleDisconnect(widget.battleRoomId); // → use case 실행
-            Navigator.pop(context);
-          },
+    return PopScope(
+      canPop: false, // 우리가 직접 제어할 거니까 false
+      onPopInvoked: (didPop) {
+        if (didPop || _isDialogOpen) {
+          // 이미 팝업 중이거나 시스템에서 처리했으면 아무것도 안 함
+          return;
+        }
+        // 우리가 직접 다이얼로그 띄움
+        if (hasDisconnectedAfterFeedback) {
+          showWaitingDialog(context);
+        } else {
+          showExitConfirmationDialog(context);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              if (hasDisconnectedAfterFeedback) {
+                showWaitingDialog(context);
+              } else {
+                showExitConfirmationDialog(context);
+              }
+            },
+          ),
+          title: Text("채팅방 ${widget.battleRoomId}", style: GoogleFonts.bebasNeue(fontSize: 22, color: Colors.white)),
+          backgroundColor: const Color(0xFF69A88D),
         ),
-        title: Text("채팅방 ${widget.battleRoomId}", style: GoogleFonts.bebasNeue(fontSize: 22, color: Colors.white)),
-        backgroundColor: const Color(0xFF69A88D),
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            hasArticleArrived
-                ? BattleTimerProgressBar(
-              onTimerEnd: () async {
-                print('타이머 종료!');
-                await sendDisconnectUseCase(widget.battleRoomId);
-              },
-            )
-                : const SizedBox.shrink(),
-            Expanded(child: buildMessageList()),
-            ChatTextField(
-              error: error,
-              loading: isRunning,
-              onSend: () => handleSendMessage(controller.text),
-              controller: controller,
-            ),
-          ],
+        body: SafeArea(
+          child: Column(
+            children: [
+              hasArticleArrived
+                  ? BattleTimerProgressBar(
+                onTimerEnd: () async {
+                  print('타이머 종료!');
+                  await sendDisconnectUseCase(widget.battleRoomId);
+
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const AlertDialog(
+                      title: Text("결과를 불러오는 중..."),
+                      content: SizedBox(
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                  );
+
+                  await fetchBattleResultWithRetry(widget.battleRoomId);
+                },
+              )
+                  : const SizedBox.shrink(),
+              Expanded(child: buildMessageList()),
+              ChatTextField(
+                error: error,
+                loading: isRunning,
+                onSend: () => handleSendMessage(controller.text),
+                controller: controller,
+              ),
+            ],
+          ),
         ),
       ),
     );

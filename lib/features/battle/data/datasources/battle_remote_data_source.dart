@@ -181,7 +181,6 @@ class BattleRemoteDataSource {
       throw Exception("유저 토큰 정보 없음");
     }
 
-    final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
     final url = Uri.parse("http://172.20.10.3:8000/battle/$battleRoomId/disconnect/");
 
     final response = await client.patch(
@@ -190,10 +189,8 @@ class BattleRemoteDataSource {
         "Authorization": "Token $token",
         "Content-Type": "application/json",
       },
-      body: jsonEncode({
-        "end_date": now,
-      }),
     );
+
 
     print("🔍 응답 상태 코드: ${response.statusCode}");
     print("🔍 응답 바디: ${utf8.decode(response.bodyBytes)}");
@@ -223,9 +220,9 @@ class BattleRemoteDataSource {
       final jsonData = jsonDecode(response.body);
       return BattleResult.fromJson(jsonData);
     } else {
+      /// 상대방이 조금 늦게 시작했을 경우 내 타이머가 끝나도 상대는 안 끝남 -> 잠깐 기다려야함
       print("❌ 결과 요청 실패: ${response.body}");
       return null;
     }
   }
-
 }

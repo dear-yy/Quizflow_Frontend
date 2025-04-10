@@ -24,6 +24,7 @@ class BattleWebSocketService {
   Stream<dynamic> get battleStream => _battleStreamController.stream;
   Stream<dynamic> get setupStream => _setupStreamController.stream;
 
+
   BattleWebSocketService({
     required this.battleroomId,
     required this.userPk,
@@ -35,8 +36,8 @@ class BattleWebSocketService {
     required VoidCallback onBattleReady,
     required Function(BattleMessageModel) onNewMessage,
     required Function(String) onOpponentFinished,
-    required VoidCallback onWaitForOtherPlayer,
-    required VoidCallback onBothPlayersFinished,
+    required Function(String) onWaitForOtherPlayer,
+    required Function(String) onBothPlayersFinished,
     required Function(String) onReceiveRole,
   }) {
     if (_isSetupConnected) return;
@@ -88,9 +89,9 @@ class BattleWebSocketService {
   /// Battle WebSocket 연결
   void connectBattle({
     required Function(BattleMessageModel) onNewMessage,
-    required Function(String opponentMessage)? onOpponentFinished,
-    required VoidCallback? onWaitForOtherPlayer,
-    required VoidCallback? onBothPlayersFinished,
+    required Function(String)? onOpponentFinished,
+    required Function(String)? onWaitForOtherPlayer,
+    required Function(String)? onBothPlayersFinished,
     required Function(String)? onReceiveRole,
   }) {
     if (_isBattleConnected) return;
@@ -109,33 +110,6 @@ class BattleWebSocketService {
       _battleStreamController.add(decoded);
 
       if (decoded["type"] == "user") {
-        if (decoded.containsKey("message_content")) {
-          print('message content 있음!!!');
-          print(decoded);
-          try {
-            final content = Map<String, dynamic>.from(decoded["message_content"]);
-            final String msg = content["message"] ?? "상대방이 먼저 종료했습니다.";
-            final bool isP1Done = content["player_1"] ?? false;
-            final bool isP2Done = content["player_2"] ?? false;
-            final int myRole = content["my_role"];
-            final bool iAmDone = myRole == 1 ? isP1Done : isP2Done;
-            final bool opponentDone = myRole == 1 ? isP2Done : isP1Done;
-
-            onReceiveRole?.call(myRole == 1 ? "player_1" : "player_2");
-
-            if (!iAmDone && opponentDone) {
-              onOpponentFinished?.call(msg);
-            } else if (iAmDone && !opponentDone) {
-              onWaitForOtherPlayer?.call();
-            } else if (iAmDone && opponentDone) {
-              onBothPlayersFinished?.call();
-            }
-          } catch (e) {
-            print("❌ 종료 메시지 파싱 실패: $e");
-            onOpponentFinished?.call("상대방이 먼저 종료했을 수 있습니다.");
-          }
-        }
-        // 기존 일반 메시지 처리
         try {
           final messageModel = BattleMessageModel.fromJson(decoded);
           onNewMessage(messageModel);
@@ -144,6 +118,53 @@ class BattleWebSocketService {
         }
       }
 
+      if (decoded["type"] == "system") {
+        /// disconnect 확인용
+        if (decoded.containsKey("is_opponent_ended") && decoded.containsKey("am_i_ended")) {
+          print('🔍 disconnect 변동 존재!!! \n $decoded)');
+
+          try {
+            final bool amIEnded = decoded["am_i_ended"] ?? false;
+            final bool isOpponentEnded = decoded["is_opponent_ended"] ?? false;
+
+            print("🔎 종료 상태 확인 → 나: $amIEnded / 상대: $isOpponentEnded");
+
+            String msg = "";
+
+            if (isOpponentEnded && !amIEnded) {
+              msg = "상대 플레이어가 배틀퀴즈를 완료하였습니다.";
+              if (onOpponentFinished != null) {
+                print("📨 onOpponentFinished 콜백 존재함 → 메시지 전달: $msg");
+                onOpponentFinished(msg);
+              } else {
+                print("⚠️ onOpponentFinished 콜백이 null입니다.");
+              }
+            } else if (!isOpponentEnded && amIEnded) {
+              msg = "상대 플레이어가 배틀퀴즈를 완료하지 못했습니다. 잠시만 대기해주세요.";
+              if (onWaitForOtherPlayer != null) {
+                print("📨 onWaitForOtherPlayer 콜백 존재함 → 메시지 전달: $msg");
+                onWaitForOtherPlayer(msg);
+              } else {
+                print("⚠️ onWaitForOtherPlayer 콜백이 null입니다.");
+              }
+            } else if (isOpponentEnded && amIEnded) {
+              msg = "두 플레이어 모두 배틀 퀴즈를 종료하였습니다. 잠시 후 결과창이 표시됩니다.";
+              if (onBothPlayersFinished != null) {
+                print("📨 onBothPlayersFinished 콜백 존재함 → 메시지 전달: $msg");
+                onBothPlayersFinished(msg);
+              } else {
+                print("⚠️ onBothPlayersFinished 콜백이 null입니다.");
+              }
+            } else {
+              print("ℹ️ 아무도 아직 끝나지 않은 상태입니다.");
+            }
+          } catch (e) {
+            print("❌ 종료 메시지 처리 중 오류 발생: $e");
+            print("📦 전체 메시지: $decoded");
+          }
+
+        }
+      }
     }, onError: (e) {
       print("❌ Battle WebSocket Error: \$e");
     }, onDone: () {
@@ -151,6 +172,8 @@ class BattleWebSocketService {
       _isBattleConnected = false;
     });
   }
+
+
 
   void sendBattleMessage(String message) {
     if (_isBattleConnected) {
