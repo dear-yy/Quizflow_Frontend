@@ -209,6 +209,50 @@ class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> fetchBattleResultUntilSuccess() async {
+    const Duration retryDelay = Duration(seconds: 2);
+    int attempt = 1;
+
+    while (true) {
+      print("🔁 무한 결과 재시도 중... 시도: $attempt");
+
+      final result = await fetchBattleResultUseCase(widget.battleRoomId);
+
+      if (result != null) {
+        Navigator.of(context, rootNavigator: true).maybePop();
+        showResultDialog(context, result);
+        return;
+      }
+      attempt++;
+      await Future.delayed(retryDelay);
+    }
+  }
+
+  void showLoadingDialog({bool showCloseButton = false}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text("결과를 불러오는 중..."),
+        content: const SizedBox(
+          height: 50,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        actions: showCloseButton
+            ? [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+            child: const Text("닫기"),
+          ),
+        ]
+            : null,
+      ),
+    );
+  }
+
+
   Widget buildMessageItem({
     BattleMessageModel? prevMessage,
     required BattleMessageModel message,
@@ -224,6 +268,12 @@ class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
         await sendDisconnectUseCase(widget.battleRoomId);
         print("📤 disconnect 전송 완료");
         hasDisconnectedAfterFeedback = true;
+
+        /// 로딩 다이얼로그 표시 (닫기 버튼 포함)
+        showLoadingDialog(showCloseButton: true);
+
+        /// 결과 올 때까지 무한 fetch
+        await fetchBattleResultUntilSuccess();
       });
     }
 
