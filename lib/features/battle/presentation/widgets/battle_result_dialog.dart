@@ -30,10 +30,6 @@ void showResultDialog(BuildContext context, BattleResult result) {
     }
   }
 
-  double getBarValue(int score) {
-    return (score.clamp(0, 100)) / 100.0;
-  }
-
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -117,7 +113,7 @@ Widget _buildPlayerCard({
         Text("$label ($nickname)", style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
         LinearProgressIndicator(
-          value: (score / 100).clamp(0.0, 1.0),
+          value: (score / 10).clamp(0.0, 1.0),
           backgroundColor: Colors.grey[200],
           valueColor: AlwaysStoppedAnimation<Color>(color),
           minHeight: 8,
