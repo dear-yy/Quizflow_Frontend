@@ -255,13 +255,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Divider(),
                   _buildProfileRow("이메일", _email ?? "-"),
                   const Divider(),
-                  _buildProfileRow("점수", _score?.toString() ?? "0"),
+                  _buildProfileRow("이번 달 점수", _score?.toString() ?? "0"),
                 ],
               ),
             ),
 
             const SizedBox(height: 30),
-
             // 🔴 액션 버튼들
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
