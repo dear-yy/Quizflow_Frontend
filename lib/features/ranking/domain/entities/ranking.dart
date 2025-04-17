@@ -2,17 +2,20 @@ class Profile {
   final String nickname;
   final int rankingScore;
   final String image;
+  final int? rank;
 
   Profile({
     required this.nickname,
     required this.rankingScore,
     required this.image,
+    this.rank,
   });
-  factory Profile.fromJson(Map<String, dynamic> json) {
+  factory Profile.fromJson(Map<String, dynamic> json, {int? rank}) {
     return Profile(
       nickname: json['nickname'] ?? "unknown",
       rankingScore: json['ranking_score'] ?? 0,
       image: json['image'] ?? "/default.png",
+      rank: rank,
     );
   }
 }
@@ -31,13 +34,18 @@ class RankingResponse {
   });
 
   factory RankingResponse.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> rawList = json['ranking_info'];
+    final List<Profile> rankedList = [];
+
+    for (int i = 0; i < rawList.length; i++) {
+      rankedList.add(Profile.fromJson(rawList[i], rank: i + 1)); // ✅ 여긴 rank 있음
+    }
+
     return RankingResponse(
-      myProfile: Profile.fromJson(json['profile']),
+      myProfile: Profile.fromJson(json['profile']), // ✅ 여긴 rank 없음
       todayScore: json['today_score'] ?? 0,
-      monthlyPercentage: json['monthly_percentage'].toDouble() ?? 0,
-      rankingInfo: (json['ranking_info'] as List)
-          .map((e) => Profile.fromJson(e))
-          .toList(),
+      monthlyPercentage: (json['monthly_percentage'] ?? 0).toDouble(),
+      rankingInfo: rankedList,
     );
   }
 }

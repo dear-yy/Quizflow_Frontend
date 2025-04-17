@@ -319,19 +319,29 @@ class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
         left: 30,
         right: 30,
         child: Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(12),
-            color: Colors.amber[100],
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+              crossAxisAlignment: CrossAxisAlignment.start,              children: [
                 Expanded(
                   child: Text(
                     message,
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                    style: GoogleFonts.bebasNeue(
+                      fontSize: 18,
+                      color: const Color(0xFF333333),
+                    ),                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -341,6 +351,9 @@ class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
                       removed = true;
                     }
                   },
+                  color: Colors.grey[600],
+                  splashRadius: 20,
+                  tooltip: '닫기',
                 ),
               ],
             ),

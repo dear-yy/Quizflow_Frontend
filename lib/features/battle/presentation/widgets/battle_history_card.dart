@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:quizflow_frontend/features/battle/domain/entities/battle_record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,59 +37,107 @@ class BattleHistoryCard extends StatelessWidget {
         final int myScore = isPlayer1 ? record.score1 : record.score2;
         final int opponentScore = isPlayer1 ? record.score2 : record.score1;
 
-        final bool isWin = record.matchResult == "승리";
-        final bool isDraw = record.matchResult == "무승부";
+
+        final bool isWin = record.matchResult == "win";
+        final bool isDraw = record.matchResult == "draw";
 
         final DateTime battleDate = DateTime.parse(record.startDate);
         final String displayDate = "${battleDate.year}.${battleDate.month.toString().padLeft(2, '0')}.${battleDate.day.toString().padLeft(2, '0')}";
 
         const String baseUrl = "http://172.20.10.3:8000";
 
-        return Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ExpansionTile(
-            leading: Icon(
-              isWin
-                  ? Icons.emoji_events
-                  : isDraw
-                  ? Icons.handshake
-                  : Icons.sentiment_dissatisfied,
-              color: isWin
-                  ? Colors.green
-                  : isDraw
-                  ? Colors.blue
-                  : Colors.red,
-            ),
-            title: Text(
-              "$displayDate - ${record.matchResult}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            childrenPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-            children: [
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: myImage.isNotEmpty ? NetworkImage("$baseUrl$myImage") : null,
-                  backgroundColor: Colors.grey[300],
-                  child: myImage.isEmpty ? const Icon(Icons.person, color: Colors.white) : null,
-                ),
-                title: Text(myName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                trailing: Text(myScore.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3EEE6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border(
+              left: BorderSide(
+                color: isWin
+                    ? const Color(0xFF176560)
+                    : isDraw
+                    ? Colors.blueGrey
+                    : Colors.redAccent,
+                width: 6,
               ),
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: opponentImage.isNotEmpty ? NetworkImage("$baseUrl$opponentImage") : null,
-                  backgroundColor: Colors.grey[300],
-                  child: opponentImage.isEmpty ? const Icon(Icons.person_outline, color: Colors.white) : null,
-                ),
-                title: Text(opponentName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                trailing: Text(opponentScore.toString(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            leading: SizedBox(
+              width: 40,
+              height: 40,
+              child: Image.asset(
+                isWin
+                    ? 'assets/images/logos/win.png'
+                    : isDraw
+                    ? 'assets/images/logos/draw.png'
+                    : 'assets/images/logos/lose.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+            title: Text(
+              "$displayDate  |  ${record.matchResult}",
+              style: GoogleFonts.bebasNeue(
+                fontSize: 22,
+                color: const Color(0xFF333333),
+              ),
+            ),
+            children: [
+              _buildPlayerTile(myImage, myName, myScore, baseUrl, isMe: true),
+              const Divider(),
+              _buildPlayerTile(opponentImage, opponentName, opponentScore, baseUrl),
+            ],
+          ),
+
         );
       },
+    );
+  }
+
+  Widget _buildPlayerTile(String image, String name, int score, String baseUrl, {bool isMe = false}) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundImage: image.isNotEmpty ? NetworkImage("$baseUrl$image") : null,
+          backgroundColor: Colors.grey[300],
+          child: image.isEmpty
+              ? Icon(
+            isMe ? Icons.person : Icons.person_outline,
+            color: Colors.white,
+          )
+              : null,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            name,
+            style: GoogleFonts.bebasNeue(
+              fontSize: 20,
+              color: const Color(0xFF444444),
+            ),
+          ),
+        ),
+        Text(
+          "$score점",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isMe ? const Color(0xFF176560) : Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }
