@@ -139,7 +139,7 @@ class _ChatListPageState extends State<ChatListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFFAFAFA),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null

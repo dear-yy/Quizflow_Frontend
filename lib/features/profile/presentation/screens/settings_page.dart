@@ -186,14 +186,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Text("설정", style: GoogleFonts.bebasNeue(fontSize: 24, color: Colors.black)),
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
+      backgroundColor: Color(0xFFFAFAFA),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

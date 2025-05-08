@@ -16,7 +16,7 @@ class RankingRemoteDataSource {
       throw Exception("로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/ranking/board/");
+    final url = Uri.parse("http://192.168.219.103:8000/ranking/board/");
     final response = await client.get(
       url,
       headers: {

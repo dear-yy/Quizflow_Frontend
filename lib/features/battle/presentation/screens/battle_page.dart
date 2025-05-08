@@ -473,6 +473,7 @@ class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
+        backgroundColor: Color(0xFFFAFAFA),
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),

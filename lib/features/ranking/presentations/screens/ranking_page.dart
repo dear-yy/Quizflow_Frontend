@@ -26,7 +26,7 @@ class _RankingPageState extends State<RankingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB), // 전체 배경을 밝은 회색 계열로
+      backgroundColor: Color(0xFFFAFAFA),
       body: SafeArea(
         child: FutureBuilder<RankingResponse>(
           future: _rankingFuture,

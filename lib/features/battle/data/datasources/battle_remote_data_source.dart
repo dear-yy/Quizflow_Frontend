@@ -20,7 +20,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/list/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/list/");
 
     try {
       final response = await client.get(
@@ -51,7 +51,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/match/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/match/");
     final response = await client.post(
       url,
       headers: {
@@ -81,7 +81,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/match/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/match/");
     final response = await client.get(
       url,
       headers: {
@@ -107,7 +107,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/new_room/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/new_room/");
     final response = await client.get(
       url,
       headers: {
@@ -146,7 +146,7 @@ class BattleRemoteDataSource {
       throw Exception("❌ 로그인이 필요합니다.");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/match/cancel/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/match/cancel/");
 
     try {
       final response = await client.get(
@@ -181,7 +181,7 @@ class BattleRemoteDataSource {
       throw Exception("유저 토큰 정보 없음");
     }
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/$battleRoomId/disconnect/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/$battleRoomId/disconnect/");
 
     final response = await client.patch(
       url,
@@ -207,7 +207,7 @@ class BattleRemoteDataSource {
     final token = prefs.getString('token');
     if (token == null) return null;
 
-    final url = Uri.parse("http://172.20.10.3:8000/battle/$battleroomId/result/");
+    final url = Uri.parse("http://192.168.219.103:8000/battle/$battleroomId/result/");
     final response = await client.get(
       url,
       headers: {

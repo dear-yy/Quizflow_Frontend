@@ -189,6 +189,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFFAFAFA),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white), // 아이콘 색상을 흰색으로 변경
@@ -197,7 +198,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         title: Text("채팅방 ${widget.quizroomId}", style: GoogleFonts.bebasNeue(fontSize: 22, color: Colors.white)),
         backgroundColor: const Color(0xFF69A88D),
       ),
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [

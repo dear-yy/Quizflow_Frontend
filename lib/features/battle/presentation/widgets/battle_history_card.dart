@@ -44,7 +44,7 @@ class BattleHistoryCard extends StatelessWidget {
         final DateTime battleDate = DateTime.parse(record.startDate);
         final String displayDate = "${battleDate.year}.${battleDate.month.toString().padLeft(2, '0')}.${battleDate.day.toString().padLeft(2, '0')}";
 
-        const String baseUrl = "http://172.20.10.3:8000";
+        const String baseUrl = "http://192.168.219.103:8000";
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
