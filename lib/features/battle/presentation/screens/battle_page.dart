@@ -485,7 +485,7 @@ class _BattlePageState extends State<BattlePage> with WidgetsBindingObserver {
               }
             },
           ),
-          title: Text("채팅방 ${widget.battleRoomId}", style: GoogleFonts.bebasNeue(fontSize: 22, color: Colors.white)),
+          title: Text("Battle", style: GoogleFonts.bebasNeue(fontSize: 22, color: Colors.white)),
           backgroundColor: const Color(0xFF69A88D),
         ),
         body: SafeArea(
