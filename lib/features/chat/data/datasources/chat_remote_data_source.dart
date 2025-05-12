@@ -57,7 +57,9 @@ class ChatRemoteDataSource {
       final responseData = json.decode(response.body);
       return responseData["quizroom"]["id"];
     } else {
-      throw Exception("❌ 채팅방 생성 실패: ${response.statusCode}");
+      final decodedBody = jsonDecode(utf8.decode(response.bodyBytes)); // 👈 한글 깨짐 방지
+      final errorMessage = decodedBody["error"] ?? "알 수 없는 오류";
+      throw Exception(errorMessage);
     }
   }
 

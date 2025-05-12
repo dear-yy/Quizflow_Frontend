@@ -21,13 +21,12 @@ class ChatListPage extends StatefulWidget {
 class _ChatListPageState extends State<ChatListPage> {
   List<Map<String, dynamic>> chats = [];
   bool _isLoading = false;
-  String? _errorMessage;
 
   late final GetChatRoomsUseCase getChatRoomsUseCase;
   late final CreateChatRoomUseCase createChatRoomUseCase;
   late final ChatRepository chatRepository;
 
-  bool _isDisposed = false; // ✅ dispose 상태 추적
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -38,7 +37,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   void dispose() {
-    _isDisposed = true; // ✅ 위젯이 제거될 때 `_isDisposed`를 true로 설정
+    _isDisposed = true;
     super.dispose();
   }
 
@@ -57,69 +56,29 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Future<void> _fetchChatRooms() async {
-    if (_isDisposed) {
-      print("❌[ERROR] ChatListPage가 이미 제거됨! setState() 실행 안 함.");
-      return;
-    }
+    if (_isDisposed) return;
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final data = await getChatRoomsUseCase.execute();
-      if (!mounted) return; // ✅ mounted 체크 추가
+      if (!mounted) return;
 
       setState(() {
         chats = data;
         _isLoading = false;
       });
-
-      print("📥[DEBUG] 채팅방 불러오기 완료! ${chats.length}개"); // ✅ 몇 개 불러왔는지 확인
     } catch (error) {
-      if (!mounted) return; // ✅ mounted 체크 추가
-
+      if (!mounted) return;
       setState(() {
-        _errorMessage = "채팅방 불러오기 실패: $error";
         _isLoading = false;
       });
-
-      print("❌[ERROR] 채팅방 불러오기 실패: $error"); // ✅ 오류 로그 추가
-    }
-  }
-
-  Future<void> _createChatRoom() async {
-    if (_isDisposed) {
-      print("❌[ERROR] ChatListPage가 이미 제거됨! 채팅방 생성 요청 중단.");
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      int newQuizroomId = await createChatRoomUseCase.execute();
-      if (!mounted) return; // ✅ mounted 체크 추가
-
-      await _fetchChatRooms();
-      _enterChatRoom(newQuizroomId);
-    } catch (error) {
-      if (!mounted) return; // ✅ mounted 체크 추가
-
-      setState(() {
-        _errorMessage = "채팅방 생성 실패: $error";
-        _isLoading = false;
-      });
+      _showErrorDialog("채팅방 불러오기 실패", error.toString());
     }
   }
 
   void _enterChatRoom(int quizroomId) {
-    if (_isDisposed) {
-      print("❌[ERROR] ChatListPage가 제거됨! 채팅방 입장 중단.");
-      return;
-    }
+    if (_isDisposed) return;
 
     Navigator.push(
       context,
@@ -131,28 +90,75 @@ class _ChatListPageState extends State<ChatListPage> {
         ),
       ),
     ).then((_) {
-      if (!mounted) return; // ✅ mounted 체크 추가
+      if (!mounted) return;
       _fetchChatRooms();
     });
+  }
+
+  void _showCreatingChatDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        title: Text("채팅방 생성 중..."),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("잠시만 기다려 주세요."),
+          ],
+        ),
+      ),
+    );
+
+    _handleCreateChatRoom(context);
+  }
+
+  Future<void> _handleCreateChatRoom(BuildContext context) async {
+    try {
+      int newQuizroomId = await createChatRoomUseCase.execute();
+      if (!mounted) return;
+      Navigator.pop(context); // 로딩 다이얼로그 닫기
+
+      await _fetchChatRooms();
+      _enterChatRoom(newQuizroomId);
+    } catch (error) {
+      if (!mounted) return;
+      Navigator.pop(context); // 로딩 다이얼로그 닫기
+
+      final errorMessage = error.toString().replaceFirst("Exception: ", "");
+
+      if (errorMessage.contains("일일 제한 초과")) {
+        _showErrorDialog("참가 제한", "오늘은 더 이상 채팅방을 생성할 수 없습니다.\n내일 다시 시도해 주세요.");
+      } else {
+        _showErrorDialog("채팅방 생성 실패", errorMessage);
+      }
+    }
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("확인"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFFFAFAFA),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            _errorMessage!,
-            style: const TextStyle(color: Colors.red, fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      )
           : ListView.builder(
         itemCount: chats.length,
         itemBuilder: (context, index) {
@@ -172,12 +178,12 @@ class _ChatListPageState extends State<ChatListPage> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 5), // 텍스트와 진행 바 간격
+                    const SizedBox(height: 5),
                     LinearProgressIndicator(
-                      value: chat["cnt"] / 3, // 진행률 (0.0 ~ 1.0)
-                      backgroundColor: Colors.grey[300], // 진행 바 배경색
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF176560)), // 진행 바 색상
-                      minHeight: 8, // 진행 바 높이
+                      value: chat["cnt"] / 3,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF176560)),
+                      minHeight: 8,
                     ),
                   ],
                 ),
@@ -188,11 +194,12 @@ class _ChatListPageState extends State<ChatListPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _createChatRoom,
+        onPressed: () => _showCreatingChatDialog(context),
         backgroundColor: const Color(0xFF176560),
         elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 26),
       ),
     );
+
   }
 }

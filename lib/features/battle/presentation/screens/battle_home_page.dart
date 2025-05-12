@@ -97,9 +97,31 @@ class _BattleHomePageState extends State<BattleHomePage> {
       await joinBattleQueueUsecase.execute();
       showBattleMatchingDialog(context);
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("배틀 매칭 대기열 참가 실패: $error")),
-      );
+      final errorMessage = error.toString();
+
+      if (errorMessage.contains("일일 제한 초과")) {
+        // 일일 제한 초과 다이얼로그
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("참가 제한"),
+              content: const Text("오늘은 더 이상 배틀에 참가하실 수 없습니다.\n내일 다시 시도해 주세요."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("확인"),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // 일반 오류 스낵바
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("배틀 매칭 대기열 참가 실패: $error")),
+        );
+      }
     }
   }
 
