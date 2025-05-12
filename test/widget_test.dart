@@ -8,20 +8,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:quizflow_frontend/features/auth/domain/usecases/register_usecase.dart';
 
 import 'package:quizflow_frontend/main.dart';
 import 'package:quizflow_frontend/features/auth/domain/usecases/login_usecase.dart';
 
 // 1️⃣ LoginUseCase를 Mock 객체로 생성
 class FakeLoginUseCase extends Mock implements LoginUseCase {}
+class FakeRegisterUseCase extends Mock implements RegisterUseCase {}
 
 void main() {
   testWidgets('로그인 테스트', (WidgetTester tester) async {
     // 2️⃣ 가짜 LoginUseCase 인스턴스 생성
     final fakeLoginUseCase = FakeLoginUseCase();
+    final fakeRegisterUseCase = FakeRegisterUseCase();
 
     // 3️⃣ MyApp을 생성할 때 fakeLoginUseCase 전달
-    await tester.pumpWidget(MyApp(loginUseCase: fakeLoginUseCase));
+    await tester.pumpWidget(MyApp(
+        loginUseCase: fakeLoginUseCase,
+        registerUseCase: fakeRegisterUseCase,
+    ));
 
     // 4️⃣ 초기 상태 검증
     expect(find.text('0'), findsOneWidget);

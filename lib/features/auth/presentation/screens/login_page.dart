@@ -1,8 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'package:quizflow_frontend/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:quizflow_frontend/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:quizflow_frontend/features/auth/domain/usecases/login_usecase.dart';
 import 'package:quizflow_frontend/features/auth/domain/usecases/register_usecase.dart';
 import 'package:quizflow_frontend/features/auth/presentation/screens/register_page.dart';
@@ -22,6 +20,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  String _passwordError = "";
 
   bool _isDisposed = false;
 
@@ -37,16 +36,20 @@ class _LoginPageState extends State<LoginPage> {
     final username = _usernameController.text;
     final password = _passwordController.text;
 
+    setState(() {
+      _passwordError = ""; // 에러 초기화
+    });
+
     if (username.isEmpty || password.isEmpty) {
-      _showError('이메일과 패스워드를 입력하세요');
+      _setPasswordErrorMessage('아이디와 비밀번호를 입력하세요.');
       return;
     }
 
     try {
       final responseData = await widget.loginUseCase.execute(username, password);
-      
-      if(_isDisposed) return; // 위젯이 제거된 경우 실행 중단
-      
+
+      if (_isDisposed) return;
+
       final token = responseData['token'];
       final userPk = responseData['user_pk'];
 
@@ -54,46 +57,37 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.setString('token', token);
       await prefs.setInt('user_pk', userPk);
 
-      if (!mounted) return; // mounted 확인 후 화면 전환
-      
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } catch (error) {
-      _showError('로그인 실패: $error');
+      _setPasswordErrorMessage(error.toString());
+      print(error);
     }
   }
 
-  void _showError(String message) {
-    if (!mounted) return; // 위젯 제거된 경우 실행 중단
-    
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('오류'),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
+  void _setPasswordErrorMessage(String message) {
+    if (!mounted) return;
+    setState(() {
+      _passwordError = message;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF69A88D), // 배경 색
+      backgroundColor: const Color(0xFF69A88D),
       body: SafeArea(
         child: Center(
+          child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/logos/transparent_white.png', // 로고 이미지
+                'assets/images/logos/transparent_white.png',
                 width: 300,
               ),
               const SizedBox(height: 20),
@@ -139,23 +133,36 @@ class _LoginPageState extends State<LoginPage> {
               // 패스워드 입력
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Password',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        border: Border.all(color: Colors.white),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 20.0),
+                        child: TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Password',
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (_passwordError.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12.0, top: 5.0),
+                        child: Text(
+                          _passwordError,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
@@ -202,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RegisterPage(registerUseCase: widget.registerUseCase),
+                          builder: (context) => RegisterPage(registerUseCase: widget.registerUseCase, loginUseCase: widget.loginUseCase),
                         ),
                       );
                     },
@@ -218,6 +225,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

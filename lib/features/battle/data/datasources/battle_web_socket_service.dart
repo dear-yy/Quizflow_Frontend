@@ -42,7 +42,7 @@ class BattleWebSocketService {
   }) {
     if (_isSetupConnected) return;
 
-    final url = Uri.parse("ws://192.168.219.103:8000/ws/battle/$battleroomId/");
+    final url = Uri.parse("ws://10.0.2.2:8000/ws/battle/$battleroomId/");
     _setupChannel = WebSocketChannel.connect(url);
 
     _setupChannel!.sink.add(jsonEncode({
@@ -96,7 +96,7 @@ class BattleWebSocketService {
   }) {
     if (_isBattleConnected) return;
 
-    final url = Uri.parse("ws://192.168.219.103:8000/ws/battle/$battleroomId/$userPk/");
+    final url = Uri.parse("ws://10.0.2.2:8000/ws/battle/$battleroomId/$userPk/");
     _battleChannel = WebSocketChannel.connect(url);
 
     _battleChannel!.sink.add(jsonEncode({
@@ -201,7 +201,7 @@ class BattleWebSocketService {
   }
 
   Future<void> sendDisconnectRequest(int userPk) async {
-    final url = Uri.parse("http://192.168.219.103:8000/battle/$battleroomId/disconnect/");
+    final url = Uri.parse("http://10.0.2.2:8000/battle/$battleroomId/disconnect/");
     final now = DateTime.now().toUtc().toIso8601String();
 
     try {

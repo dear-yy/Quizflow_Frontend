@@ -12,7 +12,7 @@ class MemberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const String baseUrl = "http://192.168.219.103:8000";
+    const String baseUrl = "http://10.0.2.2:8000";
 
     // 순위 컬러 (1~3등은 특별 표시)
     Color getRankColor(int rank) {
