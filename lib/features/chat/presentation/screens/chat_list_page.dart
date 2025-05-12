@@ -66,6 +66,8 @@ class _ChatListPageState extends State<ChatListPage> {
 
       setState(() {
         chats = data;
+        chats.sort((a, b) =>
+            DateTime.parse(b["start_date"]).compareTo(DateTime.parse(a["start_date"])));
         _isLoading = false;
       });
     } catch (error) {

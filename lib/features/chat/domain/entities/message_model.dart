@@ -32,23 +32,22 @@ class MessageModel {
     try {
       if (messageData is String) {
         try {
-          // ✅ 작은따옴표 JSON 전체를 큰따옴표 JSON으로 정확하게 변환하는 정규식
-          if (messageData.startsWith("{") && messageData.endsWith("}")) {
-            String correctedJson = messageData
-            // 키 교체
-                .replaceAllMapped(
-                RegExp(r"'([^']+)'\s*:\s*"), (m) => '"${m[1]}": ')
-            // 값 교체
-                .replaceAllMapped(
-                RegExp(r":\s*'([^']*)'"), (m) => ': "${m[1]}"');
-            messageData = jsonDecode(correctedJson);
-
-          } else {
-            throw const FormatException("Not JSON");
+          // ✅ 이미 잘 포맷된 JSON이라면 굳이 손대지 않기
+          final dynamic decoded = jsonDecode(messageData);
+          if (decoded is Map<String, dynamic>) {
+            messageData = decoded;
           }
         } catch (e) {
-          print("⚠️ JSON 파싱 실패, 원본 문자열로 처리: $e");
-          messageData = {'raw_message': messageData};
+          // ✅ fallback: 작은따옴표 기반 수정 적용
+          try {
+            String correctedJson = messageData
+                .replaceAllMapped(RegExp(r"'([^']+)'\s*:"), (m) => '"${m[1]}":')
+                .replaceAllMapped(RegExp(r":\s*'([^']*)'"), (m) => ': "${m[1]}"');
+            messageData = jsonDecode(correctedJson);
+          } catch (e) {
+            print("⚠️ JSON 파싱 실패, 원본 문자열로 처리: $e");
+            messageData = {'raw_message': messageData};
+          }
         }
       }
 
