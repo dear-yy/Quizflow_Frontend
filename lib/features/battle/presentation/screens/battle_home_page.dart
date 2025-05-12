@@ -80,6 +80,7 @@ class _BattleHomePageState extends State<BattleHomePage> {
 
       setState(() {
         battleRooms = data;
+        battleRooms.sort((a, b) => b.startDate.compareTo(a.startDate));
         _isLoading = false;
       });
     } catch (error) {
@@ -250,10 +251,9 @@ class _BattleHomePageState extends State<BattleHomePage> {
                   : ListView.builder(
                 itemCount: battleRooms.length,
                 itemBuilder: (context, index) {
-                  final reversedList = battleRooms.reversed.toList();
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: BattleHistoryCard(record: reversedList[index]),
+                    child: BattleHistoryCard(record: battleRooms[index]),
                   );
                 },
               ),
