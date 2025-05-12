@@ -19,6 +19,24 @@ class BattleMessageModel {
     this.disconnect,
   });
 
+  static Map<String, dynamic>? tryFixAndDecode(String input) {
+    try {
+      // 이미 올바른 JSON이면 그대로 파싱
+      return jsonDecode(input);
+    } catch (_) {
+      try {
+        // 작은따옴표 → 큰따옴표로 수정
+        final corrected = input
+            .replaceAllMapped(RegExp(r"'([^']+)'\s*:"), (m) => '"${m[1]}":')
+            .replaceAllMapped(RegExp(r":\s*'([^']*)'"), (m) => ': "${m[1]}"');
+        return jsonDecode(corrected);
+      } catch (e) {
+        print("⚠️ JSON 보정 실패: $e");
+        return null;
+      }
+    }
+  }
+
   factory BattleMessageModel.fromJson(Map<String, dynamic> json) {
     try {
       dynamic rawMessage = json['message'];
@@ -28,35 +46,21 @@ class BattleMessageModel {
       String? title;
       bool isDisconnect = json['disconnect'] ?? false;
 
-      // ✅ 1. 우선 message_content가 존재할 경우 우선 처리
-      if (messageContent != null) {
-        try {
-          if (messageContent is String && messageContent.contains("{")) {
-            messageContent = jsonDecode(messageContent.replaceAll("'", "\""));
-          }
-
-          if (messageContent is Map<String, dynamic> && messageContent.containsKey("message")) {
-            rawMessage = messageContent;
-          }
-        } catch (e) {
-          print("⚠️ message_content 파싱 실패: $e");
-        }
+      // ✅ message_content 우선 처리
+      if (messageContent is String && messageContent.contains("{")) {
+        messageContent = tryFixAndDecode(messageContent) ?? messageContent;
       }
 
-      // ✅ 2. message 자체가 JSON 문자열일 경우 파싱
-      if (rawMessage is String) {
-        try {
-          if (rawMessage.contains("{") && rawMessage.contains("}")) {
-            rawMessage = jsonDecode(rawMessage.replaceAll("'", "\""));
-          }
-        } catch (e) {
-          print("⚠️ message 파싱 실패: $e");
-        }
+      if (messageContent is Map<String, dynamic> && messageContent.containsKey("message")) {
+        rawMessage = messageContent;
       }
 
-      // print("📥 최종 처리 대상 message: $rawMessage");
+      // ✅ message가 문자열 JSON일 경우
+      if (rawMessage is String && rawMessage.contains("{")) {
+        rawMessage = tryFixAndDecode(rawMessage) ?? rawMessage;
+      }
 
-      // ✅ 3. 종료 메시지 또는 아티클 판단
+      // ✅ 최종 분기 처리
       if (rawMessage is Map<String, dynamic>) {
         if (rawMessage.containsKey("player_1") && rawMessage.containsKey("player_2")) {
           finalMessage = rawMessage["message"] ?? "🎯 종료 메시지 수신";
