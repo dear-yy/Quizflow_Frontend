@@ -10,12 +10,12 @@ class Profile {
     required this.image,
     this.rank,
   });
-  factory Profile.fromJson(Map<String, dynamic> json, {int? rank}) {
+  factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
       nickname: json['nickname'] ?? "unknown",
       rankingScore: json['ranking_score'] ?? 0,
       image: json['image'] ?? "/default.png",
-      rank: rank,
+      rank: json['rank'],
     );
   }
 }
@@ -38,7 +38,7 @@ class RankingResponse {
     final List<Profile> rankedList = [];
 
     for (int i = 0; i < rawList.length; i++) {
-      rankedList.add(Profile.fromJson(rawList[i], rank: i + 1)); // ✅ 여긴 rank 있음
+      rankedList.add(Profile.fromJson(rawList[i])); // ✅ 여긴 rank 있음
     }
 
     return RankingResponse(
