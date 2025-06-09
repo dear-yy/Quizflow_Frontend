@@ -37,7 +37,7 @@ lib/<br>
 12. main.dart에서 get Dependencies <br>
 13. Git repo 연결 <br>
 14. git pull <br>
-15. 로컬 서버 주소 확인 후 실행
+15. 로컬 서버 주소 확인 후 실행 (BE repo 참고)
     ```flutter run```
 
 ### 4. 참고
