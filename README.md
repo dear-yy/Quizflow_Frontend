@@ -12,12 +12,12 @@
 ```
 lib/<br>
 └── features/<br>
-    ├── auth/         # 로그인, 회원가입 관련 기능<br>
-    ├── battle/       # 실시간 퀴즈 배틀 기능<br>
-    ├── chat/         # OpenAI 기반 채팅 기능<br>
-    ├── home/         # 홈 화면<br>
-    ├── profile/      # 사용자 프로필 관련 기능<br>
-    └── ranking/      # 랭킹 시스템<br>
+    ├── auth/         # 로그인, 회원가입 관련 기능
+    ├── battle/       # 실시간 퀴즈 배틀 기능
+    ├── chat/         # OpenAI 기반 채팅 기능
+    ├── home/         # 홈 화면
+    ├── profile/      # 사용자 프로필 관련 기능
+    └── ranking/      # 랭킹 시스템
 ```
 
 ### 3. 설치 및 실행
